@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<!-- PROTOTYPE - NOT FOR PRODUCTION -->
+<!-- Question: Does the deduction loop feel satisfying? Do clues produce reasoning or guessing? -->
+<!-- Date: 2026-03-25 -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Global Pursuit — Prototype</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0d0d14;
+      color: #e5e7eb;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 24px 16px 48px;
+    }
+
+    #app { width: 100%; max-width: 480px; margin-top: 12px; }
+
+    .card {
+      background: #1a1a2e;
+      border: 1px solid #2a2a42;
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .game-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #e8b84b;
+      margin-bottom: 3px;
+    }
+
+    .case-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 18px;
+      line-height: 1.2;
+    }
+
+    .meta {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .meta-row { display: flex; gap: 10px; font-size: 13px; line-height: 1.4; }
+    .meta-key { color: #6b7280; min-width: 72px; flex-shrink: 0; font-weight: 500; padding-top: 1px; }
+    .meta-val { color: #e5e7eb; }
+
+    hr { border: none; border-top: 1px solid #2a2a42; margin: 20px 0; }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #6b7280;
+      margin-bottom: 8px;
+    }
+
+    .clue-box {
+      background: #0d0d14;
+      border: 1px solid #2a2a42;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .clue-text {
+      font-size: 15px;
+      line-height: 1.65;
+      color: #e5e7eb;
+    }
+
+    /* Progress */
+    .progress-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .progress-dots { display: flex; gap: 5px; }
+    .pdot { width: 28px; height: 3px; border-radius: 2px; background: #2a2a42; }
+    .pdot.active { background: #e8b84b; }
+    .pdot.won    { background: #22c55e; }
+    .pdot.lost   { background: #ef4444; }
+    .leg-counter { font-size: 12px; color: #6b7280; }
+
+    /* City buttons */
+    .city-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+
+    .city-btn {
+      width: 100%;
+      padding: 13px 16px;
+      background: #0d0d14;
+      border: 1px solid #2a2a42;
+      border-radius: 8px;
+      color: #e5e7eb;
+      font-size: 15px;
+      font-weight: 500;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: border-color 0.12s, background 0.12s;
+    }
+    .city-btn:hover:not(:disabled) {
+      border-color: #e8b84b;
+      background: rgba(232, 184, 75, 0.06);
+    }
+    .city-btn:disabled { cursor: default; }
+
+    .city-btn.s-correct {
+      border-color: #22c55e;
+      background: rgba(34, 197, 94, 0.1);
+      color: #22c55e;
+    }
+    .city-btn.s-wrong {
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.08);
+      color: #ef4444;
+    }
+    .city-btn.s-reveal {
+      border-color: rgba(34, 197, 94, 0.4);
+      background: rgba(34, 197, 94, 0.04);
+      color: rgba(34, 197, 94, 0.5);
+    }
+    .city-btn .mark { font-size: 14px; min-width: 16px; text-align: right; }
+
+    /* Feedback */
+    .feedback-box {
+      border-radius: 8px;
+      padding: 13px 15px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .feedback-box.ok {
+      border: 1px solid #22c55e;
+      background: rgba(34, 197, 94, 0.05);
+      color: #22c55e;
+    }
+    .feedback-box.nope {
+      border: 1px solid #2a2a42;
+      background: rgba(0, 0, 0, 0.2);
+      color: #9ca3af;
+    }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.12s;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn-gold  { background: #e8b84b; color: #0d0d14; }
+    .btn-dark  { background: #2a2a42; color: #e5e7eb; }
+
+    .btn-row { display: flex; gap: 10px; }
+    .btn-row .btn { flex: 1; }
+
+    /* Result */
+    .result-emoji  { text-align: center; font-size: 28px; letter-spacing: 8px; margin: 8px 0 14px; }
+    .result-head   { text-align: center; font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+    .result-head.win  { color: #22c55e; }
+    .result-head.fail { color: #ef4444; }
+    .result-sub    { text-align: center; font-size: 14px; color: #9ca3af; margin-bottom: 24px; }
+
+    .share-preview {
+      background: #0d0d14;
+      border: 1px solid #2a2a42;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.85;
+      color: #e5e7eb;
+      white-space: pre;
+    }
+
+    /* Prototype banner */
+    .proto-banner {
+      text-align: center;
+      font-size: 11px;
+      color: #4b5563;
+      margin-bottom: 12px;
+      letter-spacing: 0.04em;
+    }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+'use strict';
+// PROTOTYPE - NOT FOR PRODUCTION
+// Question: Does the deduction loop feel satisfying? Do clues produce reasoning or guessing?
+// Date: 2026-03-25
+
+// ─── CASE DATA ────────────────────────────────────────────────────────────────
+// 2 authored cases. Each follows the Signal Funnel:
+//   Leg 1 = Broad  (continent / major region)
+//   Leg 2 = Medium  (sub-region / country cluster)
+//   Leg 3 = Medium-Precise  (2-5 plausible cities)
+//   Leg 4 = Precise  (Aha moment achievable)
+
+const CASES = [
+  {
+    id: 'case-001',
+    number: 1,
+    criminal: 'The Courier',
+    crime: 'A rare illuminated manuscript vanished from a Berlin auction house moments before the sale. Security footage shows a lone figure slipping out a rear exit with a flat package under one arm.',
+    startingCity: 'Berlin, Germany',
+    legs: [
+      {
+        // Broad → Istanbul (sits on the Bosphorus between Europe and Asia)
+        // Reasoning: narrow strait + two continents + two seas = Bosphorus = Istanbul
+        target: 'Istanbul',
+        clue: 'A ticket agent at Tegel remembered the suspect — they\'d asked for a window seat to watch the water. Their destination: a city famous for straddling the boundary of two continents, where a narrow waterway connects two separate bodies of water.',
+        recovery: 'Border records confirm the suspect flew toward a city where you can stand in Europe and look across a narrow channel directly into Asia — one of the world\'s only cities that spans two continents.',
+        options: ['Istanbul', 'Athens', 'Cairo', 'Beirut'],
+        correct: 0
+      },
+      {
+        // Medium → Tbilisi (Georgia — Caucasus, between Black Sea & Caspian, ancient wine region)
+        // Reasoning: Caucasus + between two seas + ancient wine-making + carved stone churches = Georgia = Tbilisi
+        target: 'Tbilisi',
+        clue: 'Customs records place the suspect heading east into a compact, hilly country tucked between the Black Sea and the Caspian Sea — one of the oldest wine-producing regions on earth, where medieval stone churches are carved into cliffsides above river valleys.',
+        recovery: 'The suspect crossed into a small Caucasus nation — among the earliest countries to adopt Christianity — where vineyards have been cultivated for over 8,000 years and the capital sits in a deep gorge carved by a river.',
+        options: ['Tbilisi', 'Yerevan', 'Baku', 'Ankara'],
+        correct: 0
+      },
+      {
+        // Medium-Precise → Almaty (Kazakhstan, former capital, mountain base, not current capital)
+        // Reasoning: Central Asia + mountain base + former economic capital before new planned capital = Almaty
+        target: 'Almaty',
+        clue: 'Eyewitnesses place the suspect in Central Asia — at the base of a dramatic snow-capped mountain range, in a former capital city that lost its government functions to a new planned city built on the open steppe, but retained its role as the country\'s commercial engine.',
+        recovery: 'The trail leads to the largest city in a Central Asian nation — no longer the seat of government, which moved to a new city on the plains — but still the economic and cultural heart, nestled against mountain foothills in the southeast.',
+        options: ['Almaty', 'Tashkent', 'Bishkek', 'Astana'],
+        correct: 0
+      },
+      {
+        // Precise → Samarkand (Silk Road, Registan plaza — three grand tilework buildings facing each other)
+        // Reasoning: Silk Road + monumental plaza of three tile-covered buildings = Registan = Samarkand
+        // Aha moment: "three grand tile-covered buildings facing each other" = Registan (described, not named)
+        target: 'Samarkand',
+        clue: 'The manuscript trail ends at an ancient Silk Road city — famous above all for its monumental central plaza where three grand mosques and academies, each covered in brilliant geometric tilework, face each other across a vast courtyard. A UNESCO site. Surrounded by desert and steppe.',
+        recovery: 'Final destination: a Silk Road city celebrated worldwide for its central square of three towering buildings whose facades are covered in intricate blue-and-turquoise tilework — the architectural crown of a medieval Central Asian empire.',
+        options: ['Samarkand', 'Bukhara', 'Dushanbe', 'Kabul'],
+        correct: 0
+      }
+    ]
+  },
+  {
+    id: 'case-002',
+    number: 2,
+    criminal: 'The Architect',
+    crime: 'Classified infrastructure blueprints were lifted from a Paris government archive. Intelligence suggests they\'re in transit to a buyer — moving fast, hopping continents.',
+    startingCity: 'Paris, France',
+    legs: [
+      {
+        // Broad → Dubai (Gulf desert, rapid growth from fishing port to skyscraper city)
+        // Reasoning: Gulf desert + near-zero rainfall + transformed from fishing port in 50 years = Dubai
+        target: 'Dubai',
+        clue: 'Surveillance at CDG shows the suspect boarding a Gulf-bound flight. Destination: a desert city with virtually no annual rainfall that transformed from a small fishing port into a skyline of record-breaking towers in under five decades — now a global hub for trade and transit between continents.',
+        recovery: 'The suspect flew to a city in the Arabian Peninsula desert — one of the fastest-growing urban centers in modern history — now a major hub for international finance, aviation, and luxury travel.',
+        options: ['Dubai', 'Cairo', 'Riyadh', 'Istanbul'],
+        correct: 0
+      },
+      {
+        // Medium → Mumbai (western coast of Indian subcontinent, largest film industry by volume, peninsula)
+        // Reasoning: western coast + subcontinent + world's most prolific film industry + peninsula into Arabian Sea = Mumbai
+        target: 'Mumbai',
+        clue: 'Dubai exit records show the suspect flew east to a dense coastal megacity on the western side of a large subcontinent — a city built on a peninsula jutting into the Arabian Sea, home to the world\'s most prolific film industry by output volume.',
+        recovery: 'The trail leads to South Asia\'s financial and entertainment capital — a crowded port city on the subcontinent\'s western coast, where a film industry producing thousands of titles per year dominates the culture.',
+        options: ['Mumbai', 'Karachi', 'Chennai', 'Colombo'],
+        correct: 0
+      },
+      {
+        // Medium-Precise → Singapore (island city-state, southern tip of peninsula, strict laws, busiest port)
+        // Reasoning: tiny island city-state + southern tip of peninsula + world's busiest port + strict civic laws = Singapore
+        target: 'Singapore',
+        clue: 'From Mumbai, the suspect flew southeast to a tiny island city-state positioned at the southern tip of a long peninsula — one of the world\'s busiest port complexes, and a society known for exceptionally strict public conduct laws.',
+        recovery: 'The trail continues to a small, wealthy island nation at the crossroads of Southeast Asian sea routes — famous globally for its cleanliness, strict laws, and status as a financial and logistics hub.',
+        options: ['Singapore', 'Kuala Lumpur', 'Jakarta', 'Bangkok'],
+        correct: 0
+      },
+      {
+        // Precise → Hong Kong (harbor city, mountains, distinct legal system within larger country, former colony)
+        // Reasoning: harbor city + mountains + distinct legal/political arrangement within larger country + South China Sea = Hong Kong
+        // Aha moment: "distinct legal system despite belonging to a larger country" + "harbor between mountains" = can only be HK
+        target: 'Hong Kong',
+        clue: 'Final destination: a dense harbor city on the South China Sea, pressed between steep mountain terrain and a famous deep-water port — operating under its own distinct legal and political system, even though it officially belongs to a much larger neighboring country.',
+        recovery: 'The blueprints are in a small but intensely built harbor city — a former colonial port — that now operates under a unique arrangement giving it substantial legal autonomy from the nation that surrounds it.',
+        options: ['Hong Kong', 'Macau', 'Shanghai', 'Taipei'],
+        correct: 0
+      }
+    ]
+  }
+];
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+
+let S = {
+  screen:   'brief',   // 'brief' | 'game' | 'result'
+  caseIdx:  0,
+  legIdx:   0,
+  chosen:   null,      // option index | null
+  missedPrev: false,   // serve recovery clue on current leg?
+  path:     [],        // array of booleans (true = correct)
+};
+
+function C()   { return CASES[S.caseIdx]; }
+function leg() { return C().legs[S.legIdx]; }
+
+// ─── ACTIONS ──────────────────────────────────────────────────────────────────
+
+function startCase() {
+  S.screen = 'game'; S.legIdx = 0; S.chosen = null;
+  S.missedPrev = false; S.path = [];
+  render();
+}
+
+function chooseCity(i) {
+  if (S.chosen !== null) return;
+  S.chosen = i;
+  S.path.push(i === leg().correct);
+  render();
+}
+
+function advance() {
+  const wasCorrect = S.path[S.path.length - 1];
+  if (S.legIdx >= 3) { S.screen = 'result'; render(); return; }
+  S.missedPrev = !wasCorrect;
+  S.legIdx++;
+  S.chosen = null;
+  render();
+}
+
+function nextCase() {
+  S.caseIdx = (S.caseIdx + 1) % CASES.length;
+  S.screen = 'brief'; S.legIdx = 0; S.chosen = null;
+  S.missedPrev = false; S.path = [];
+  render();
+}
+
+function copyShare() {
+  navigator.clipboard.writeText(shareText()).then(() => {
+    const btn = document.getElementById('copybtn');
+    if (btn) { btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy to share', 2000); }
+  });
+}
+
+function shareText() {
+  const c = C();
+  const won = S.path[3];
+  const eff = Math.round(S.path.filter(Boolean).length / 4 * 100);
+  const grid = S.path.map(b => b ? '🟩' : '🟥').join('');
+  return `🌍 Global Pursuit #${c.number}\n${grid}\n${won ? 'Caught in 4 moves' : 'Suspect escaped'}\nEfficiency: ${eff}%\n#GlobalPursuit`;
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+
+function render() {
+  document.getElementById('app').innerHTML =
+    '<div class="proto-banner">PROTOTYPE — deduction loop test</div>' +
+    (S.screen === 'brief'  ? renderBrief()  :
+     S.screen === 'game'   ? renderGame()   :
+                             renderResult());
+}
+
+function renderBrief() {
+  const c = C();
+  return `<div class="card">
+    <div class="game-label">Global Pursuit</div>
+    <div class="case-title">Case #${c.number}: ${c.criminal}</div>
+    <div class="meta">
+      <div class="meta-row"><span class="meta-key">Crime</span><span class="meta-val">${c.crime}</span></div>
+      <div class="meta-row"><span class="meta-key">Last seen</span><span class="meta-val">${c.startingCity}</span></div>
+      <div class="meta-row"><span class="meta-key">Moves</span><span class="meta-val">4 maximum — no retries</span></div>
+    </div>
+    <hr>
+    <div class="section-label">First Signal</div>
+    <div class="clue-box"><div class="clue-text">${c.legs[0].clue}</div></div>
+    <button class="btn btn-gold" onclick="startCase()">Begin the Chase →</button>
+  </div>`;
+}
+
+function renderGame() {
+  const c = C();
+  const l = leg();
+  const clue = (S.missedPrev && S.legIdx > 0) ? l.recovery : l.clue;
+  const chosen = S.chosen;
+  const isCorrect = chosen !== null ? chosen === l.correct : null;
+  const legNum = S.legIdx + 1;
+
+  // Progress dots
+  const dots = Array.from({length: 4}, (_, i) => {
+    let cls = 'pdot';
+    if (i < S.path.length) cls += S.path[i] ? ' won' : ' lost';
+    else if (i === S.legIdx) cls += ' active';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+
+  // City buttons
+  const buttons = l.options.map((city, i) => {
+    let cls = 'city-btn';
+    let mark = '';
+    if (chosen !== null) {
+      if (i === l.correct) {
+        cls += chosen === l.correct ? ' s-correct' : ' s-reveal';
+        mark = '✓';
+      } else if (i === chosen) {
+        cls += ' s-wrong';
+        mark = '✗';
+      }
+    }
+    return `<button class="${cls}" onclick="chooseCity(${i})" ${chosen !== null ? 'disabled' : ''}>
+      ${city}<span class="mark">${mark}</span>
+    </button>`;
+  }).join('');
+
+  // Feedback
+  let feedback = '';
+  if (chosen !== null) {
+    feedback = isCorrect
+      ? `<div class="feedback-box ok">✓ On the trail.${legNum < 4 ? ' The signal narrows.' : ' Closing in.'}</div>`
+      : `<div class="feedback-box nope">No one here has seen the suspect. A move wasted — but the trail isn't cold yet.</div>`;
+  }
+
+  // Continue button
+  const continueBtn = chosen !== null
+    ? `<button class="btn btn-gold" onclick="advance()">${S.legIdx >= 3 ? 'See Results' : 'Continue →'}</button>`
+    : '';
+
+  return `<div class="card">
+    <div class="game-label">Global Pursuit · Case #${c.number}</div>
+    <div class="progress-row">
+      <div class="progress-dots">${dots}</div>
+      <div class="leg-counter">Move ${legNum} of 4</div>
+    </div>
+    <hr style="margin:12px 0 16px;">
+    <div class="section-label">Signal</div>
+    <div class="clue-box"><div class="clue-text">${clue}</div></div>
+    <div class="section-label">Where is ${c.criminal} headed?</div>
+    <div class="city-list">${buttons}</div>
+    ${feedback}
+    ${continueBtn}
+  </div>`;
+}
+
+function renderResult() {
+  const c = C();
+  const won = S.path[3];
+  const eff = Math.round(S.path.filter(Boolean).length / 4 * 100);
+  const grid = S.path.map(b => b ? '🟩' : '🟥').join('');
+  const share = shareText();
+
+  return `<div class="card">
+    <div class="game-label">Global Pursuit · Case #${c.number}</div>
+    <hr style="margin-top:8px;">
+    <div style="margin-top:20px;">
+      <div class="result-emoji">${grid}</div>
+      <div class="result-head ${won ? 'win' : 'fail'}">${won ? 'Suspect Caught' : 'Suspect Escaped'}</div>
+      <div class="result-sub">${c.criminal} &nbsp;·&nbsp; Path Efficiency: ${eff}%</div>
+    </div>
+    <div class="share-preview">${share}</div>
+    <div class="btn-row">
+      <button class="btn btn-gold" id="copybtn" onclick="copyShare()">Copy to share</button>
+      <button class="btn btn-dark" onclick="nextCase()">Next case →</button>
+    </div>
+  </div>`;
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
