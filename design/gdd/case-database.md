@@ -3,7 +3,7 @@
 > **Status**: Approved
 > **Reviewed**: 2026-03-24 — design review CONCERNS resolved; blockers cleared
 > **Author**: Product Director + Claude
-> **Last Updated**: 2026-03-24
+> **Last Updated**: 2026-03-25 — `signals` field added to Leg schema (follow-up from Clue Engine GDD approval)
 > **Implements Pillar**: Enables all pillars (foundational data layer)
 
 ## Overview
@@ -52,6 +52,7 @@ case authors and read by game systems. It does not change during a session.
 - `clue_text` (string) — the clue the player reads when deciding this move; must pass all 4 Clue Validity Principles
 - `recovery_clue_text` (string) — a more explicit version of `clue_text`, shown by the Clue Engine when the player made a wrong move on the *previous* leg; must pass the same 4 Clue Validity Principles; authored alongside `clue_text`
 - `wrong_options` (City[], length 2–4) — hand-curated decoys; combined with `target_city` yields 3–5 total options per move
+- `signals` (string[], optional) — list of signal tags for this leg, e.g. `["cold", "industrial", "coastal"]`; used by the Clue Engine and City Selection to render signal icons; drawn from the project's finite signal tag vocabulary; absence is valid (no icons rendered)
 - `reasoning_chain` (string, optional) — author note explaining inference path; never shown to player; used during validity review
 
 **City** (referenced by Case and Leg)

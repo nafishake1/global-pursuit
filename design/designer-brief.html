@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Global Pursuit — Designer Brief</title>
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --surface: #1a1a1a;
+      --surface-2: #222;
+      --border: #2e2e2e;
+      --gold: #F5C519;
+      --gold-dim: rgba(245,197,25,0.12);
+      --gold-border: rgba(245,197,25,0.3);
+      --white: #ffffff;
+      --gray: #888;
+      --gray-2: #555;
+      --green: #52c41a;
+      --green-dim: rgba(82,196,26,0.1);
+      --red: #ff4d4f;
+      --red-dim: rgba(255,77,79,0.1);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, sans-serif;
+      line-height: 1.6;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 24px 100px;
+    }
+    h1 { font-size: 2.8rem; font-weight: 700; letter-spacing: -0.04em; line-height: 1.1; }
+    h2 { font-size: 1.4rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 16px; }
+    h3 { font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
+    p { color: #ccc; line-height: 1.75; }
+
+    .section { margin-bottom: 80px; }
+    .section-label {
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--gold); margin-bottom: 12px; display: block;
+    }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 24px;
+    }
+    .card.gold { border-color: var(--gold-border); background: var(--gold-dim); }
+    .card.green { border-color: rgba(82,196,26,0.3); background: var(--green-dim); }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    hr { border: none; border-top: 1px solid var(--border); margin: 72px 0; }
+
+    .hero { padding: 56px 0 48px; border-bottom: 1px solid var(--border); margin-bottom: 64px; }
+    .hero-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+    .tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 100px; font-size: 0.72rem; font-weight: 500;
+      background: var(--surface); border: 1px solid var(--border); color: var(--gray);
+    }
+    .tag.gold { background: var(--gold-dim); border-color: var(--gold-border); color: var(--gold); }
+    .hero h1 { margin-bottom: 10px; }
+    .hero h1 span { color: var(--gold); }
+    .hero-sub { font-size: 1.05rem; color: var(--gray); margin-top: 6px; }
+    .hero-tagline {
+      margin-top: 28px; font-size: 1.3rem; font-weight: 600;
+      color: var(--gold); font-style: italic; letter-spacing: -0.01em;
+    }
+
+    .flow { display: flex; align-items: flex-start; gap: 0; overflow-x: auto; padding-bottom: 4px; }
+    .flow-step {
+      flex: 1; min-width: 130px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 12px;
+    }
+    .flow-step.active { border-color: var(--gold-border); background: var(--gold-dim); }
+    .flow-step.capture { border-color: rgba(82,196,26,0.4); background: var(--green-dim); }
+    .flow-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); margin-bottom: 5px; }
+    .flow-step.capture .flow-label { color: var(--green); }
+    .flow-title { font-size: 0.88rem; font-weight: 600; margin-bottom: 3px; line-height: 1.3; }
+    .flow-desc { font-size: 0.72rem; color: var(--gray); line-height: 1.45; }
+    .flow-arrow {
+      width: 28px; flex-shrink: 0; display: flex;
+      align-items: center; justify-content: center;
+      padding-top: 22px; color: var(--gray-2); font-size: 1rem;
+    }
+
+    .screens-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: stretch; }
+    .screen {
+      width: 100%; min-height: 480px;
+      background: #111; border: 2px solid #3a3a3a;
+      border-radius: 16px; overflow: hidden;
+      display: flex; flex-direction: column;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 8px 24px rgba(0,0,0,0.5);
+    }
+    .screen-bar {
+      padding: 10px 12px 8px; display: flex;
+      align-items: center; justify-content: space-between;
+      border-bottom: 2px solid #3a3a3a; background: #1a1a1a;
+    }
+    .screen-name { font-size: 0.62rem; font-weight: 600; letter-spacing: 0.06em; color: #aaa; text-transform: uppercase; }
+    .screen-badge { font-size: 0.6rem; font-weight: 700; color: var(--gold); }
+    .screen-badge.green { color: var(--green); }
+    .screen-body { flex: 1; padding: 10px; display: flex; flex-direction: column; gap: 7px; }
+
+    .wf-block { background: var(--surface-2); border-radius: 6px; padding: 7px 9px; }
+    .wf-label { font-size: 0.55rem; color: var(--gray); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; }
+    .wf-text { font-size: 0.68rem; color: #ccc; line-height: 1.4; }
+    .wf-text.gold { color: var(--gold); font-weight: 600; }
+    .wf-globe-wrap {
+      flex: 1; background: var(--surface-2); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 90px; position: relative; overflow: hidden;
+    }
+    .wf-counter {
+      position: absolute; top: 6px; left: 6px;
+      background: var(--gold-dim); border: 1px solid var(--gold-border);
+      border-radius: 100px; font-size: 0.55rem; color: var(--gold);
+      padding: 2px 6px; font-weight: 600;
+    }
+    .wf-pin { position: absolute; width: 8px; height: 8px; background: var(--gold); border-radius: 50%; }
+    .wf-witness {
+      background: var(--surface-2); border-radius: 5px;
+      padding: 6px 8px; border-left: 2px solid var(--gold);
+    }
+    .wf-witness.locked {
+      border-left: none; border: 1px dashed var(--border);
+      display: flex; align-items: center; gap: 5px;
+      color: var(--gray); font-size: 0.65rem;
+    }
+    .wf-btn {
+      background: var(--gold); color: #000; border-radius: 6px;
+      padding: 7px 10px; font-size: 0.7rem; font-weight: 700;
+      text-align: center; margin-top: auto;
+    }
+    .wf-btn.ghost { background: transparent; border: 1px solid var(--border); color: var(--gray); font-weight: 500; }
+    .wf-wrong-city {
+      background: var(--red-dim); border: 1px solid rgba(255,77,79,0.25);
+      border-radius: 5px; padding: 6px 8px;
+    }
+    .wf-wrong-label { font-size: 0.55rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--red); margin-bottom: 2px; }
+    .wf-capture-badge {
+      background: var(--green-dim); border: 1px solid rgba(82,196,26,0.3);
+      border-radius: 6px; padding: 8px 10px; text-align: center;
+    }
+    .wf-capture-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--green); margin-bottom: 2px; }
+
+    #globe-wrap {
+      width: 100%; height: 480px;
+      background: #111; border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden; position: relative; cursor: grab;
+    }
+    #globe-wrap:active { cursor: grabbing; }
+    #globe-canvas { width: 100%; height: 100%; display: block; }
+    .globe-counter {
+      position: absolute; top: 16px; left: 16px;
+      background: rgba(245,197,25,0.15); border: 1px solid rgba(245,197,25,0.35);
+      border-radius: 100px; padding: 6px 14px;
+      font-size: 0.8rem; font-weight: 600; color: var(--gold); pointer-events: none;
+    }
+    .globe-hint {
+      position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.6); border: 1px solid var(--border);
+      border-radius: 100px; padding: 6px 14px;
+      font-size: 0.75rem; color: var(--gray); pointer-events: none; white-space: nowrap;
+    }
+    .globe-selected {
+      position: absolute; bottom: 52px; left: 50%; transform: translateX(-50%);
+      background: var(--gold); color: #000; border-radius: 8px;
+      padding: 8px 18px; font-size: 0.9rem; font-weight: 700;
+      pointer-events: none; opacity: 0; transition: opacity 0.2s; white-space: nowrap;
+    }
+    .edge-indicator {
+      position: absolute; width: 26px; height: 26px;
+      background: rgba(245,197,25,0.18); border: 1px solid rgba(245,197,25,0.45);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem; color: var(--gold); pointer-events: none;
+    }
+
+    .signal-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+    .signal-tag {
+      display: flex; align-items: center; gap: 7px;
+      padding: 6px 12px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 8px;
+      font-size: 0.78rem; color: #ccc;
+    }
+    .signal-icon {
+      width: 22px; height: 22px; background: var(--gold-dim);
+      border-radius: 5px; display: flex; align-items: center;
+      justify-content: center; font-size: 0.8rem;
+    }
+    .signal-category { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray); margin: 20px 0 8px; }
+
+    .deliverable { display: flex; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--border); }
+    .deliverable:last-child { border-bottom: none; }
+    .deliverable-icon {
+      width: 40px; height: 40px; background: var(--gold-dim);
+      border-radius: 10px; display: flex; align-items: center;
+      justify-content: center; font-size: 1.1rem; flex-shrink: 0;
+    }
+    .deliverable-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 3px; }
+    .deliverable-desc { font-size: 0.8rem; color: var(--gray); line-height: 1.55; }
+
+    .code {
+      font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+      font-size: 0.78rem; background: #111; border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 16px 20px; color: #ccc;
+      white-space: pre; overflow-x: auto; line-height: 1.7;
+    }
+    .code .cm { color: var(--gray-2); }
+    .code .ky { color: var(--gold); }
+
+    .pipeline { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .pipeline-node {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px 16px; text-align: center;
+    }
+    .pipeline-node-label { font-size: 0.6rem; color: var(--gray); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .pipeline-node-name { font-size: 0.82rem; font-weight: 600; }
+    .pipeline-arrow { color: var(--gray-2); font-size: 1rem; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+    th { text-align: left; padding: 8px 12px; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--gray); border-bottom: 1px solid var(--border); }
+    td { padding: 10px 12px; border-bottom: 1px solid rgba(46,46,46,0.5); color: #ccc; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    td:first-child { color: var(--white); font-weight: 500; }
+
+    .question { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .question:last-child { border-bottom: none; }
+    .question-num { font-size: 0.75rem; font-weight: 700; color: var(--gold); min-width: 20px; padding-top: 2px; }
+    .question-text { font-size: 0.85rem; color: #ccc; line-height: 1.5; }
+
+    @media (max-width: 640px) {
+      h1 { font-size: 2rem; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .flow { flex-direction: column; }
+      .flow-arrow { transform: rotate(90deg); align-self: center; padding-top: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tags">
+    <span class="tag gold">Designer Brief</span>
+    <span class="tag">March 2026</span>
+    <span class="tag">React + Framer Motion + Capacitor</span>
+    <span class="tag">Web · iOS · Android</span>
+    <span class="tag">Daily Puzzle</span>
+  </div>
+  <h1>Global <span>Pursuit</span></h1>
+  <p class="hero-sub">A comprehensive brief for your first session.</p>
+  <p class="hero-tagline">"You don't need to know the world. You need to read it."</p>
+</div>
+
+<!-- THE GAME -->
+<div class="section">
+  <span class="section-label">The Game</span>
+  <h2>What is it?</h2>
+  <div class="card gold" style="margin-bottom:16px;">
+    <p style="font-size:1rem; color:#fff; line-height:1.8;">
+      A daily deduction game. A criminal is on the run. You track them across 4 cities by interviewing witnesses and reading clues — then tapping the right city on a spinning globe. Like Wordle's daily ritual, built around geographic reasoning rather than recall.
+    </p>
+  </div>
+  <div class="grid-2" style="margin-bottom:16px;">
+    <div class="card">
+      <h3>Session length</h3>
+      <p style="font-size:0.85rem;">2–5 minutes. One case per day. Share your score without spoilers.</p>
+    </div>
+    <div class="card">
+      <h3>Target platform</h3>
+      <p style="font-size:0.85rem;">Mobile-first web app, packaged as iOS + Android via Capacitor. Touch is the primary input.</p>
+    </div>
+  </div>
+  <h3 style="margin-bottom:12px; color:var(--gray); font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em;">Comparable titles</h3>
+  <table>
+    <thead><tr><th>Title</th><th>What we take from it</th></tr></thead>
+    <tbody>
+      <tr><td>Wordle</td><td>Daily ritual, share card, FOMO without spoilers</td></tr>
+      <tr><td>Carmen Sandiego (90s)</td><td>Chase fantasy, campy tone, theatrical villain</td></tr>
+      <tr><td>MapTap.gg</td><td>Globe interaction model, tap-to-guess UX</td></tr>
+      <tr><td>NYT Games suite</td><td>Editorial quality bar, clean information design</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr>
+
+<!-- THE VIBE -->
+<div class="section">
+  <span class="section-label">The Vibe</span>
+  <h2>Tone direction</h2>
+  <div class="card gold" style="margin-bottom:20px;">
+    <p style="font-size:1rem; color:#fff; line-height:1.8;">
+      <strong>Campy and theatrical — 90s Carmen Sandiego energy.</strong> Bold, witty, playful. The criminal is a larger-than-life globe-trotter who's always one step ahead — until suddenly, they're not. The emotional register is like a punchline landing: theatrical reveals, fanfare, a villain caught mid-escape.<br><br>
+      NOT tense or grim. NOT cheerful or casual. Fun, precise, and satisfying.
+    </p>
+  </div>
+  <div class="grid-3" style="margin-bottom:20px;">
+    <div class="card" style="text-align:center; padding:16px;">
+      <div style="font-size:1.8rem; margin-bottom:8px;">🕵️</div>
+      <div style="font-size:0.78rem; font-weight:600;">Theatrical detective</div>
+      <div style="font-size:0.72rem; color:var(--gray); margin-top:3px;">You're the best in the field</div>
+    </div>
+    <div class="card" style="text-align:center; padding:16px;">
+      <div style="font-size:1.8rem; margin-bottom:8px;">🦹</div>
+      <div style="font-size:0.78rem; font-weight:600;">Showboating villain</div>
+      <div style="font-size:0.72rem; color:var(--gray); margin-top:3px;">Always one step ahead</div>
+    </div>
+    <div class="card" style="text-align:center; padding:16px;">
+      <div style="font-size:1.8rem; margin-bottom:8px;">🌍</div>
+      <div style="font-size:0.78rem; font-weight:600;">Globe-trotting chase</div>
+      <div style="font-size:0.72rem; color:var(--gray); margin-top:3px;">Tokyo → Oslo → Lagos</div>
+    </div>
+  </div>
+  <div style="display:flex; flex-wrap:wrap; gap:8px;">
+    <span class="tag gold">90s Carmen Sandiego</span>
+    <span class="tag gold">Travel poster aesthetic</span>
+    <span class="tag gold">NYT editorial cleanliness</span>
+    <span class="tag gold">Theatrical villain energy</span>
+    <span class="tag gold">Punchline, not alarm</span>
+    <span class="tag gold">Satisfying "gotcha" moment</span>
+  </div>
+  <div class="card" style="margin-top:20px; border-color:rgba(255,77,79,0.4); background:rgba(255,77,79,0.07);">
+    <div style="font-size:0.65rem; font-weight:700; letter-spacing:0.15em; text-transform:uppercase; color:var(--red); margin-bottom:8px;">Design Constraint — Criminal Visibility</div>
+    <p style="font-size:0.85rem; color:#fff; line-height:1.75;"><strong>The criminal is never shown. No avatar, no face, no portrait.</strong> They exist only as an absence — felt through witness accounts, Director briefings, and the trail they leave behind. Do not design criminal character art for MVP.</p>
+  </div>
+</div>
+
+<hr>
+
+<!-- CORE LOOP -->
+<div class="section">
+  <span class="section-label">Core Loop</span>
+  <h2>How it's played</h2>
+  <div style="margin-bottom:20px;">
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-label">Start</div>
+        <div class="flow-title">Case Brief</div>
+        <div class="flow-desc">CIA Director. Crime + starting city given (e.g. Paris). No choice — you go there.</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step active">
+        <div class="flow-label">Round 1</div>
+        <div class="flow-title">Investigate</div>
+        <div class="flow-desc">3 witnesses. Tap each to reveal clue. Spin globe, find pins, tap your guess.</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step active">
+        <div class="flow-label">Round 2</div>
+        <div class="flow-title">Investigate</div>
+        <div class="flow-desc">Arrive at next city. 3 more witnesses. Closing in.</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step active">
+        <div class="flow-label">Round 3</div>
+        <div class="flow-title">Investigate</div>
+        <div class="flow-desc">Third city. Clues get more precise. You know where this is going.</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step capture">
+        <div class="flow-label">Round 4</div>
+        <div class="flow-title">Capture</div>
+        <div class="flow-desc">Correct city = arrest. Theatrical payoff. Score + share card.</div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:16px;">
+    <h3 style="margin-bottom:10px;">Wrong guess flow</h3>
+    <p style="font-size:0.85rem;">You tap a wrong city → flight animation takes you there → a witness delivers an archetype-voiced wrong-city response (e.g. Café Owner: <em style="color:var(--white);">"I know every face that sits at my tables. That face has never sat at my tables."</em>) → the city greys out on the globe → you pick again. No lives lost. Wrong guesses reduce your efficiency score. Wrong-city responses are drawn from a per-archetype pool — see <strong style="color:var(--white);">characters GDD</strong> for full variants.</p>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Witness reveal</h3>
+      <p style="font-size:0.83rem;">3 witnesses per city, tap one at a time. Witness 1 = broad signal. Witness 2 = narrows it. Witness 3 = precise. You can guess after any witness.</p>
+    </div>
+    <div class="card">
+      <h3>Scoring</h3>
+      <p style="font-size:0.83rem;">Path Efficiency %. Fewer witnesses used + fewer wrong guesses = higher score. You always catch the criminal — the question is how cleanly.</p>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- INTERACTIVE GLOBE -->
+<div class="section">
+  <span class="section-label">The Globe</span>
+  <h2>The game board — try it</h2>
+  <p style="margin-bottom:20px; color:var(--gray);">The globe IS the selection UI. No city cards, no lists. Players spin to find highlighted pins anywhere in the world and tap to guess.</p>
+
+  <div id="globe-wrap">
+    <canvas id="globe-canvas"></canvas>
+    <div class="globe-counter" id="globe-counter">3 cities · find them all</div>
+    <div class="globe-hint">Drag to spin · Tap a city to guess</div>
+    <div class="globe-selected" id="globe-selected"></div>
+  </div>
+
+  <div class="card gold" style="margin-top:16px; margin-bottom:16px;">
+    <p style="font-size:0.88rem; color:#fff;">
+      <strong>The mechanic:</strong> City pins are scattered globally — the criminal's route is globe-spanning (Paris → Tokyo → Oslo → Rio). Players spin to discover pins. Only highlighted cities are tappable. Wrong cities grey out after the narrative response. The hunt for pins is part of the experience, not friction.
+    </p>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Discoverability</h3>
+      <p style="font-size:0.82rem;">Gold arrows at the globe edge point toward off-screen pins. Counter shows how many exist. Players always know more pins are out there.</p>
+    </div>
+    <div class="card">
+      <h3>Mobile-first</h3>
+      <p style="font-size:0.82rem;">Touch drag to spin. Tap to select. Hit targets are larger than visual pin size. City name labels appear above each pin.</p>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- SCREEN WIREFRAMES -->
+<div class="section">
+  <span class="section-label">Screens</span>
+  <h2>Screen states</h2>
+
+  <div class="grid-2" style="margin-bottom:24px;">
+    <div class="card gold">
+      <h3>💬 CIA Director = Text thread</h3>
+      <p style="font-size:0.82rem; margin-top:6px;">The case brief and capture confirmation arrive as a text message thread from the Director. Intimate, theatrical, spy-fantasy. The dramatic tone lands perfectly as a direct message.</p>
+    </div>
+    <div class="card gold">
+      <h3>🎭 Witnesses = Scene cards</h3>
+      <p style="font-size:0.82rem; margin-top:6px;">Each witness reveal is a scene card — a location environment (café, taxi, airport gate) with the witness character present as a silhouette. Clue delivered as a caption overlay. Three scenes per city — each one narrows the trail.</p>
+    </div>
+  </div>
+
+  <div class="screens-row">
+
+    <!-- Screen 1: CIA Director Text Thread -->
+    <div class="screen">
+      <div class="screen-bar">
+        <span class="screen-name">Case Brief</span>
+        <span class="screen-badge">TEXT</span>
+      </div>
+      <div class="screen-body" style="padding:8px; background:#0a0a0a;">
+        <!-- Contact header -->
+        <div style="display:flex; align-items:center; gap:7px; padding:4px 2px 8px; border-bottom:1px solid var(--border); margin-bottom:8px;">
+          <div style="width:28px; height:28px; background:var(--gold-dim); border:1px solid var(--gold-border); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.7rem; flex-shrink:0;">🕵️</div>
+          <div>
+            <div style="font-size:0.7rem; font-weight:700; color:var(--white);">Director Vance</div>
+            <div style="font-size:0.55rem; color:var(--green);">● Secure channel</div>
+          </div>
+        </div>
+        <!-- Messages -->
+        <div style="display:flex; flex-direction:column; gap:6px; flex:1;">
+          <div style="background:var(--surface); border-radius:10px 10px 10px 2px; padding:7px 9px; max-width:85%;">
+            <div style="font-size:0.68rem; color:#ddd; line-height:1.4;">This criminal has outsmarted every agent we have.</div>
+            <div style="font-size:0.68rem; color:var(--gold); font-weight:600; margin-top:3px;">Until now.</div>
+          </div>
+          <div style="background:var(--surface); border-radius:10px 10px 10px 2px; padding:7px 9px; max-width:90%;">
+            <div style="font-size:0.65rem; color:var(--gray); margin-bottom:2px; text-transform:uppercase; letter-spacing:0.06em;">Last seen</div>
+            <div style="font-size:0.72rem; color:var(--gold); font-weight:600;">📍 Paris, France</div>
+          </div>
+          <div style="background:var(--surface); border-radius:10px 10px 10px 2px; padding:7px 9px; max-width:85%;">
+            <div style="font-size:0.68rem; color:#ddd; line-height:1.4;">The trail starts there. Don't lose it.</div>
+          </div>
+          <div style="font-size:0.55rem; color:var(--gray-2); padding-left:2px;">Delivered · Encrypted</div>
+        </div>
+        <div style="flex:1;"></div>
+        <div class="wf-btn" style="margin-top:10px;">Accept case →</div>
+      </div>
+    </div>
+
+    <!-- Screen 2: Witness Scene Card -->
+    <div class="screen">
+      <div class="screen-bar">
+        <span class="screen-name">Witness</span>
+        <span class="screen-badge">ROUND 2</span>
+      </div>
+      <div class="screen-body" style="padding:8px; background:#0a0a0a; gap:6px;">
+
+        <!-- Witness progress dots -->
+        <div style="display:flex; gap:4px; justify-content:center; padding:2px 0 4px;">
+          <div style="width:20px; height:4px; background:var(--gold); border-radius:2px;"></div>
+          <div style="width:20px; height:4px; background:var(--border); border-radius:2px;"></div>
+          <div style="width:20px; height:4px; background:var(--border); border-radius:2px;"></div>
+        </div>
+
+        <!-- Scene illustration area -->
+        <div style="background:linear-gradient(180deg, #1a1208 0%, #0d0d0d 100%); border-radius:10px; flex:1; position:relative; overflow:hidden; min-height:110px; border:1px solid var(--border); display:flex; align-items:flex-end; justify-content:center;">
+          <!-- Scene background suggestion: warm interior lines -->
+          <div style="position:absolute; inset:0; opacity:0.18;">
+            <!-- Café window -->
+            <div style="position:absolute; top:10px; left:12px; width:22px; height:28px; border:1px solid rgba(245,197,25,0.6); border-radius:2px; background:rgba(245,197,25,0.1);"></div>
+            <div style="position:absolute; top:10px; right:12px; width:22px; height:28px; border:1px solid rgba(245,197,25,0.6); border-radius:2px; background:rgba(245,197,25,0.1);"></div>
+            <!-- Counter line -->
+            <div style="position:absolute; bottom:28px; left:0; right:0; height:1px; background:rgba(255,255,255,0.2);"></div>
+          </div>
+          <!-- Character silhouette -->
+          <div style="position:relative; z-index:2; text-align:center; padding-bottom:8px;">
+            <div style="width:28px; height:48px; margin:0 auto; position:relative;">
+              <!-- Head -->
+              <div style="width:16px; height:16px; background:rgba(255,255,255,0.15); border-radius:50%; margin:0 auto;"></div>
+              <!-- Body -->
+              <div style="width:22px; height:26px; background:rgba(255,255,255,0.12); border-radius:4px 4px 0 0; margin:2px auto 0;"></div>
+            </div>
+            <div style="font-size:0.58rem; color:var(--gold); font-weight:600; margin-top:4px; letter-spacing:0.06em; text-transform:uppercase;">Café Owner</div>
+          </div>
+          <!-- Scene label -->
+          <div style="position:absolute; top:7px; left:7px; background:rgba(0,0,0,0.7); border-radius:4px; padding:2px 6px; font-size:0.55rem; color:var(--gray); letter-spacing:0.05em; text-transform:uppercase;">Tokyo · Café</div>
+          <!-- Signal icons -->
+          <div style="position:absolute; bottom:7px; right:7px; display:flex; gap:4px;">
+            <div style="background:rgba(0,0,0,0.75); border:1px solid rgba(255,255,255,0.1); border-radius:4px; padding:2px 5px; font-size:0.62rem;">❄️</div>
+            <div style="background:rgba(0,0,0,0.75); border:1px solid rgba(255,255,255,0.1); border-radius:4px; padding:2px 5px; font-size:0.62rem;">🗻</div>
+          </div>
+        </div>
+
+        <!-- Clue caption -->
+        <div style="background:var(--surface); border-radius:7px; padding:6px 8px; border-left:2px solid var(--gold);">
+          <div style="font-size:0.67rem; color:#ddd; font-style:italic; line-height:1.4;">"She paid in cash. Left in a hurry — asked which flights go somewhere colder."</div>
+        </div>
+
+        <!-- Locked witnesses -->
+        <div style="display:flex; gap:5px;">
+          <div style="flex:1; background:var(--surface-2); border:1px dashed var(--border); border-radius:6px; padding:5px; text-align:center; font-size:0.6rem; color:var(--gray);">🔒 Witness 2</div>
+          <div style="flex:1; background:var(--surface-2); border:1px dashed var(--border); border-radius:6px; padding:5px; text-align:center; font-size:0.6rem; color:var(--gray);">🔒 Witness 3</div>
+        </div>
+
+        <div class="wf-btn">I know — show globe →</div>
+      </div>
+    </div>
+
+    <!-- Screen 3: Globe Selection -->
+    <div class="screen">
+      <div class="screen-bar">
+        <span class="screen-name">Globe</span>
+        <span class="screen-badge">PICK A CITY</span>
+      </div>
+      <div class="screen-body">
+        <div class="wf-globe-wrap">
+          <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
+            <circle cx="36" cy="36" r="34" fill="#1a1a1a" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+            <ellipse cx="36" cy="36" rx="20" ry="34" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+            <ellipse cx="36" cy="36" rx="34" ry="14" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+            <line x1="2" y1="36" x2="70" y2="36" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+          </svg>
+          <div class="wf-pin" style="top:22px;left:48px;"></div>
+          <div class="wf-pin" style="top:50px;left:18px;"></div>
+          <div class="wf-pin" style="top:30px;left:26px;"></div>
+          <div class="wf-counter">3 cities</div>
+        </div>
+        <div style="font-size:0.62rem; color:var(--gray); text-align:center; padding:4px;">Drag to spin · Tap to guess</div>
+      </div>
+    </div>
+
+    <!-- Screen 4: Success State -->
+    <div class="screen">
+      <div class="screen-bar">
+        <span class="screen-name">Trail Confirmed</span>
+        <span class="screen-badge" style="color:var(--green);">✓</span>
+      </div>
+      <div class="screen-body" style="padding:8px; background:#0a0a0a; gap:6px;">
+        <!-- Confirmation badge -->
+        <div style="background:var(--green-dim); border:1px solid rgba(82,196,26,0.3); border-radius:8px; padding:8px; text-align:center;">
+          <div style="font-size:0.6rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--green); margin-bottom:2px;">Trail confirmed</div>
+          <div style="font-size:0.9rem; font-weight:700; color:var(--white);">Oslo ✓</div>
+        </div>
+        <!-- Director text response -->
+        <div style="background:var(--surface); border-radius:10px 10px 10px 2px; padding:7px 9px;">
+          <div style="font-size:0.55rem; color:var(--gray); margin-bottom:2px; text-transform:uppercase; letter-spacing:0.06em;">Director Vance</div>
+          <div style="font-size:0.68rem; color:#ddd; font-style:italic;">"Good call, Agent. Keep moving."</div>
+        </div>
+        <!-- Flight arc indicator -->
+        <div style="background:var(--surface-2); border-radius:7px; padding:7px 9px;">
+          <div style="font-size:0.6rem; color:var(--gray); margin-bottom:3px; text-transform:uppercase; letter-spacing:0.06em;">Next flight</div>
+          <div style="font-size:0.72rem; color:var(--white); display:flex; align-items:center; gap:4px;">
+            <span>Oslo</span>
+            <span style="color:var(--gold);">✈ →</span>
+            <span style="color:var(--gray);">???</span>
+          </div>
+        </div>
+        <!-- Round progress -->
+        <div style="display:flex; justify-content:center; gap:6px; padding:4px;">
+          <div style="width:8px; height:8px; background:var(--green); border-radius:50%;"></div>
+          <div style="width:8px; height:8px; background:var(--green); border-radius:50%;"></div>
+          <div style="width:8px; height:8px; background:var(--border); border-radius:50%;"></div>
+          <div style="width:8px; height:8px; background:var(--border); border-radius:50%;"></div>
+        </div>
+        <div style="flex:1;"></div>
+        <div class="wf-btn">Fly to next city →</div>
+      </div>
+    </div>
+
+    <!-- Screen 5: Wrong City -->
+    <div class="screen">
+      <div class="screen-bar">
+        <span class="screen-name">Wrong City</span>
+        <span class="screen-badge" style="color:var(--red);">✕</span>
+      </div>
+      <div class="screen-body" style="padding:8px; background:#0a0a0a; gap:6px;">
+        <div class="wf-wrong-city">
+          <div class="wf-wrong-label">No match · Bangkok</div>
+          <div class="wf-text" style="font-size:0.67rem; color:#ccc; font-style:italic; margin-top:3px;">"I know every face that sits at my tables. That face has never sat at my tables."</div>
+        </div>
+        <!-- Greyed pin -->
+        <div style="background:var(--surface-2); border-radius:6px; padding:6px 8px; display:flex; align-items:center; gap:6px;">
+          <div style="width:7px; height:7px; background:var(--gray-2); border-radius:50%;"></div>
+          <div style="font-size:0.7rem; text-decoration:line-through; opacity:0.4; color:var(--gray);">Bangkok</div>
+        </div>
+        <div style="flex:1;"></div>
+        <div class="wf-btn ghost">← Try another city</div>
+      </div>
+    </div>
+
+    <!-- Screen 6: Capture -->
+    <div class="screen">
+      <div class="screen-bar">
+        <span class="screen-name">Capture</span>
+        <span class="screen-badge green">ROUND 4</span>
+      </div>
+      <div class="screen-body" style="padding:8px; background:#0a0a0a; gap:6px;">
+        <div class="wf-capture-badge">
+          <div class="wf-capture-label">Captured: The Architect</div>
+        </div>
+        <!-- Director message -->
+        <div style="background:var(--surface); border-radius:10px 10px 10px 2px; padding:7px 9px;">
+          <div style="font-size:0.55rem; color:var(--gray); margin-bottom:2px; text-transform:uppercase; letter-spacing:0.06em;">Director Vance</div>
+          <div style="font-size:0.67rem; color:#ddd; font-style:italic;">"Outstanding. They had a twelve-hour head start. Case closed."</div>
+        </div>
+        <div class="wf-block">
+          <div class="wf-label">Route</div>
+          <div class="wf-text" style="font-size:0.65rem;">Paris → Oslo → Mumbai → Lagos → <strong style="color:var(--green);">Rio ✓</strong></div>
+        </div>
+        <div class="wf-block">
+          <div class="wf-label">Efficiency</div>
+          <div class="wf-text gold" style="font-size:1.1rem; font-weight:700;">87%</div>
+        </div>
+        <div style="flex:1;"></div>
+        <div class="wf-btn">Share result →</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="card" style="margin-top:20px;">
+    <h3 style="margin-bottom:8px;">Open design question — witness scene art style</h3>
+    <p style="font-size:0.83rem;">Each witness interaction is a scene card: a location environment (café interior, taxi seat, airport gate) with the witness character present. The open question is the character treatment: <strong style="color:var(--white);">illustrated archetype portrait</strong> (the Café Owner has a face, a look, a personality — more charismatic, larger scope) vs. <strong style="color:var(--white);">stylised silhouette</strong> (anonymous figure in the scene — less illustration scope for MVP, still atmospheric). Decide tonight.</p>
+  </div>
+</div>
+
+<hr>
+
+<!-- VISUAL SYSTEM -->
+<div class="section">
+  <span class="section-label">Visual System</span>
+  <h2>Two distinct layers</h2>
+  <div class="grid-2" style="margin-bottom:32px;">
+    <div class="card gold">
+      <h3>Signal icons — clue card</h3>
+      <p style="font-size:0.83rem; margin-top:6px;">~25–30 SVGs rendered from <code style="font-size:0.78rem; background:#000; padding:1px 5px; border-radius:3px;">signals[]</code> on each witness clue. Appear alongside clue text as reading aids. The player still reasons from signal to city — icons don't give away the answer.</p>
+    </div>
+    <div class="card">
+      <h3>City visuals — globe pins</h3>
+      <p style="font-size:0.83rem; margin-top:6px;">Optional per-city SVGs (flag, landmark, artifact, cultural dress, currency). Authored once per city. Appear on globe pins — <strong>never on clue cards</strong>. City pins show names only, preserving deduction.</p>
+    </div>
+  </div>
+
+  <h3 style="margin-bottom:4px;">Signal icon taxonomy</h3>
+  <p style="font-size:0.82rem; color:var(--gray); margin-bottom:4px;">Finite vocabulary — locked before case authoring begins. Must read clearly at 20px.</p>
+
+  <div class="signal-category">Climate</div>
+  <div class="signal-grid">
+    <div class="signal-tag"><div class="signal-icon">❄️</div>cold</div>
+    <div class="signal-tag"><div class="signal-icon">🌴</div>tropical</div>
+    <div class="signal-tag"><div class="signal-icon">🏜️</div>arid</div>
+    <div class="signal-tag"><div class="signal-icon">🌿</div>temperate</div>
+    <div class="signal-tag"><div class="signal-icon">🌨️</div>polar</div>
+  </div>
+  <div class="signal-category">Terrain</div>
+  <div class="signal-grid">
+    <div class="signal-tag"><div class="signal-icon">🌊</div>coastal</div>
+    <div class="signal-tag"><div class="signal-icon">🏔️</div>landlocked</div>
+    <div class="signal-tag"><div class="signal-icon">🏝️</div>island</div>
+    <div class="signal-tag"><div class="signal-icon">⛰️</div>mountainous</div>
+  </div>
+  <div class="signal-category">Economy</div>
+  <div class="signal-grid">
+    <div class="signal-tag"><div class="signal-icon">🏭</div>industrial</div>
+    <div class="signal-tag"><div class="signal-icon">💰</div>financial hub</div>
+    <div class="signal-tag"><div class="signal-icon">🌾</div>agricultural</div>
+    <div class="signal-tag"><div class="signal-icon">⚓</div>major port</div>
+    <div class="signal-tag"><div class="signal-icon">✈️</div>major airport</div>
+  </div>
+  <div class="signal-category">Culture</div>
+  <div class="signal-grid">
+    <div class="signal-tag"><div class="signal-icon">🏯</div>east-asian</div>
+    <div class="signal-tag"><div class="signal-icon">🕌</div>south-asian</div>
+    <div class="signal-tag"><div class="signal-icon">🏰</div>western-european</div>
+    <div class="signal-tag"><div class="signal-icon">🕍</div>middle-eastern</div>
+    <div class="signal-tag"><div class="signal-icon">🪘</div>sub-saharan</div>
+  </div>
+
+  <div style="margin-top:32px;">
+    <h3 style="margin-bottom:12px;">City visual structure</h3>
+    <div class="code"><span class="cm">// Authored once per city — reused across all cases</span>
+<span class="ky">"Tokyo"</span>: {
+  flag:           <span class="cm">jp.svg</span>
+  landmark:       <span class="cm">tokyo-bay-sketch.svg  ← illustrated, not named</span>
+  artifact:       <span class="cm">torii-gate.svg</span>
+  cultural_dress: <span class="cm">kimono.svg</span>
+  currency:       <span class="cm">yen-coin.svg</span>
+}
+<span class="cm">// None are required — use what exists, skip what doesn't</span></div>
+  </div>
+</div>
+
+<hr>
+
+<!-- DESIGN PILLARS -->
+<div class="section">
+  <span class="section-label">Design Pillars</span>
+  <h2>The five pillars</h2>
+  <div class="grid-2">
+    <div class="card">
+      <div style="font-size:1.4rem; margin-bottom:8px;">🔍</div>
+      <h3>1. Deduction Over Trivia</h3>
+      <p style="font-size:0.82rem;">Every answer must be reachable by reasoning. No question has "just know it" as the only path. Clues describe signals; the player connects them to geography.</p>
+    </div>
+    <div class="card">
+      <div style="font-size:1.4rem; margin-bottom:8px;">⚖️</div>
+      <h3>2. Tension Without Cruelty</h3>
+      <p style="font-size:0.82rem;">Wrong moves cost efficiency, not lives. You always catch the criminal. No fail states.</p>
+    </div>
+    <div class="card">
+      <div style="font-size:1.4rem; margin-bottom:8px;">⚡</div>
+      <h3>3. Snappy Above All</h3>
+      <p style="font-size:0.82rem;">Sub-2s load. Instant transitions. Zero perceptible lag. Performance is a design value, not an afterthought.</p>
+    </div>
+    <div class="card">
+      <div style="font-size:1.4rem; margin-bottom:8px;">📤</div>
+      <h3>4. Clean Social Proof</h3>
+      <p style="font-size:0.82rem;">Share card creates FOMO without spoilers. Results communicate skill without revealing the route.</p>
+    </div>
+    <div class="card gold" style="grid-column: span 2;">
+      <div style="font-size:1.4rem; margin-bottom:8px;">🎭</div>
+      <h3>5. Juice Without Lag</h3>
+      <p style="font-size:0.88rem; color:#fff; margin-top:6px;">Every correct action is rewarded immediately — visually, sonically, haptically. Animations fire on input, never after. State never waits for feedback. The register is theatrical and campy — the dramatic reveal, fanfare, a villain caught mid-escape. Punchline landing, not alarm sounding.</p>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- DELIVERABLES -->
+<div class="section">
+  <span class="section-label">Your Role</span>
+  <h2>Design deliverables</h2>
+  <div class="card">
+    <div class="deliverable">
+      <div class="deliverable-icon">🌍</div>
+      <div>
+        <div class="deliverable-title">Globe Component Design</div>
+        <div class="deliverable-desc">Visual language for the interactive globe: sphere + grid style, pin states (default, hover, selected, greyed-out), flight arc style, edge indicator arrows. This is the hero element of the game.</div>
+      </div>
+    </div>
+    <div class="deliverable">
+      <div class="deliverable-icon">🎨</div>
+      <div>
+        <div class="deliverable-title">Signal Icon Set</div>
+        <div class="deliverable-desc">~25–30 SVG icons for the signal taxonomy. Legible at 20px. Consistent style — slightly illustrated, not purely flat. Taxonomy must be locked before case authoring begins.</div>
+      </div>
+    </div>
+    <div class="deliverable">
+      <div class="deliverable-icon">🏙️</div>
+      <div>
+        <div class="deliverable-title">City Visual Assets</div>
+        <div class="deliverable-desc">Optional per-city SVGs: flags, landmark sketches, artifacts, cultural dress, currency. Prioritise the 30-city MVP set. Landmark illustrations must be evocative but not name the place.</div>
+      </div>
+    </div>
+    <div class="deliverable">
+      <div class="deliverable-icon">📱</div>
+      <div>
+        <div class="deliverable-title">UI Component System</div>
+        <div class="deliverable-desc">Figma components for: witness cards (3 states: locked, revealed, dim), clue card with signal icon strip, globe overlay, case brief, wrong-guess screen, capture screen, result + share card.</div>
+      </div>
+    </div>
+    <div class="deliverable">
+      <div class="deliverable-icon">🎬</div>
+      <div>
+        <div class="deliverable-title">Motion Principles</div>
+        <div class="deliverable-desc">Animation language: flight arc style, pin reveal, wrong-guess fly-to sequence, capture payoff, share card reveal. Timing values map to Framer Motion configs.</div>
+      </div>
+    </div>
+    <div class="deliverable">
+      <div class="deliverable-icon">🔤</div>
+      <div>
+        <div class="deliverable-title">Design Tokens</div>
+        <div class="deliverable-desc">Colour, type, spacing, motion values as Figma Variables. Exported as <code style="font-size:0.78rem; background:#222; padding:1px 4px; border-radius:3px;">tokens.json</code> → CSS custom properties in the app.</div>
+      </div>
+    </div>
+    <div class="deliverable">
+      <div class="deliverable-icon">🖼️</div>
+      <div>
+        <div class="deliverable-title">Art Direction Bible</div>
+        <div class="deliverable-desc">Mood board, colour direction, illustration style guide. Criminal character(s) — illustrated villain silhouette or per-case avatar? CIA Director — illustrated or text-only for MVP?</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- WORKING TOGETHER -->
+<div class="section">
+  <span class="section-label">Working Together</span>
+  <h2>The pipeline</h2>
+  <div class="pipeline" style="margin-bottom:28px;">
+    <div class="pipeline-node">
+      <div class="pipeline-node-label">Source</div>
+      <div class="pipeline-node-name">Figma</div>
+    </div>
+    <div class="pipeline-arrow">→</div>
+    <div class="pipeline-node">
+      <div class="pipeline-node-label">Handoff</div>
+      <div class="pipeline-node-name">Dev Mode + Tokens</div>
+    </div>
+    <div class="pipeline-arrow">→</div>
+    <div class="pipeline-node">
+      <div class="pipeline-node-label">Export</div>
+      <div class="pipeline-node-name">tokens.json + SVGs</div>
+    </div>
+    <div class="pipeline-arrow">→</div>
+    <div class="pipeline-node">
+      <div class="pipeline-node-label">Repo</div>
+      <div class="pipeline-node-name">/src/assets/</div>
+    </div>
+    <div class="pipeline-arrow">→</div>
+    <div class="pipeline-node">
+      <div class="pipeline-node-label">App</div>
+      <div class="pipeline-node-name">React components</div>
+    </div>
+  </div>
+
+  <h3 style="margin-bottom:12px;">Asset naming convention</h3>
+  <div class="code" style="margin-bottom:24px;"><span class="cm"># Signal icons  →  /src/assets/icons/signals/</span>
+<span class="ky">signal--cold.svg</span>
+<span class="ky">signal--coastal.svg</span>
+<span class="ky">signal--industrial.svg</span>
+
+<span class="cm"># City visuals  →  /src/assets/icons/cities/</span>
+<span class="ky">city--tokyo--flag.svg</span>
+<span class="ky">city--tokyo--landmark.svg</span>
+<span class="ky">city--paris--cultural-dress.svg</span>
+
+<span class="cm"># UI icons  →  /src/assets/ui/</span>
+<span class="ky">icon--check.svg</span>
+<span class="ky">icon--arrow-right.svg</span></div>
+
+  <h3 style="margin-bottom:12px;">Git workflow</h3>
+  <div class="card">
+    <table>
+      <thead><tr><th>Step</th><th>What to do</th></tr></thead>
+      <tbody>
+        <tr><td>Before starting</td><td>Pull <code style="font-size:0.78rem; background:#222; padding:1px 4px; border-radius:3px;">main</code> to get latest</td></tr>
+        <tr><td>Create branch</td><td><code style="font-size:0.78rem; background:#222; padding:1px 4px; border-radius:3px;">design/globe-pins</code> or <code style="font-size:0.78rem; background:#222; padding:1px 4px; border-radius:3px;">design/signal-icons-v1</code></td></tr>
+        <tr><td>Commit assets</td><td>SVG files + updated tokens.json</td></tr>
+        <tr><td>Open PR</td><td>Tag for review before merging to main</td></tr>
+        <tr><td>Never</td><td>Commit directly to main</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<hr>
+
+<!-- OPEN QUESTIONS -->
+<div class="section">
+  <span class="section-label">For Tonight</span>
+  <h2>Open questions</h2>
+  <div class="card gold">
+    <div class="question">
+      <div class="question-num">1.</div>
+      <div class="question-text"><strong>Design token pipeline</strong> — Tokens Studio plugin, or manual JSON export? Determines how tokens stay in sync between Figma and code.</div>
+    </div>
+    <div class="question">
+      <div class="question-num">2.</div>
+      <div class="question-text"><strong>Signal icon style</strong> — Filled, outline, or duotone? Should feel consistent with campy/theatrical tone — slightly illustrated rather than purely flat.</div>
+    </div>
+    <div class="question">
+      <div class="question-num">3.</div>
+      <div class="question-text"><strong>Criminal characters</strong> — One generic villain silhouette for MVP, or illustrated per-case characters? Big scope difference.</div>
+    </div>
+    <div class="question">
+      <div class="question-num">4.</div>
+      <div class="question-text"><strong>CIA Director</strong> — Illustrated character (adds personality and camps up the brief) or text-only for MVP?</div>
+    </div>
+    <div class="question">
+      <div class="question-num">5.</div>
+      <div class="question-text"><strong>Wrong-guess animation</strong> — Full flight arc to wrong city + witness response, or a faster "zip and bounce back"? Affects session pace significantly.</div>
+    </div>
+    <div class="question">
+      <div class="question-num">6.</div>
+      <div class="question-text"><strong>Capture sequence</strong> — Round 4 is the theatrical payoff. Handcuffs moment? Dramatic zoom? Full-screen reveal? This needs its own design pass.</div>
+    </div>
+    <div class="question">
+      <div class="question-num">7.</div>
+      <div class="question-text"><strong>Sprint 1 spike</strong> — Globe interaction on mobile is the highest technical risk. Can we get a design + dev spike on pin visibility and touch targets in the first two weeks?</div>
+    </div>
+  </div>
+</div>
+
+<div style="text-align:center; padding:32px 0; color:var(--gray-2); font-size:0.75rem; border-top:1px solid var(--border); margin-top:40px;">
+  Global Pursuit · Designer Brief · March 2026 · Confidential
+</div>
+
+<script>
+(function() {
+  // Pure Canvas 2D globe — no external dependencies
+
+  function init() {
+    const canvas = document.getElementById('globe-canvas');
+    const wrap = document.getElementById('globe-wrap');
+    const selectedEl = document.getElementById('globe-selected');
+    if (!canvas || !wrap) return;
+
+    const ctx = canvas.getContext('2d');
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let W = 0, H = 0;
+
+    function setSize() {
+      W = wrap.clientWidth;
+      H = wrap.clientHeight;
+      if (W === 0 || H === 0) return;
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+    }
+    setSize();
+
+    const CITIES = [
+      { name: 'Tokyo',          lat:  35.68 * Math.PI/180, lng:  139.69 * Math.PI/180 },
+      { name: 'Rio de Janeiro', lat: -22.91 * Math.PI/180, lng:  -43.17 * Math.PI/180 },
+      { name: 'Oslo',           lat:  59.91 * Math.PI/180, lng:   10.75 * Math.PI/180 },
+    ];
+
+    // Convert lat/lng to unit sphere XYZ
+    function ll3(lat, lng) {
+      return [
+        Math.cos(lat) * Math.cos(lng),
+        Math.sin(lat),
+        Math.cos(lat) * Math.sin(lng)
+      ];
+    }
+
+    // Rotate point by rotX (tilt) then rotY (spin)
+    function rot([x, y, z], rx, ry) {
+      // spin (Y axis)
+      const x1 =  x * Math.cos(ry) + z * Math.sin(ry);
+      const z1 = -x * Math.sin(ry) + z * Math.cos(ry);
+      // tilt (X axis)
+      const y2 = y * Math.cos(rx) - z1 * Math.sin(rx);
+      const z2 = y * Math.sin(rx) + z1 * Math.cos(rx);
+      return [x1, y2, z2];
+    }
+
+    let rotX = 0.25, rotY = -0.5;
+    let velX = 0,   velY = 0.004;
+    let dragging = false, moved = false;
+    let lastX = 0,  lastY = 0;
+    let tick = 0;
+
+    // DOM labels
+    const labels = CITIES.map(c => {
+      const el = document.createElement('div');
+      el.style.cssText = 'position:absolute;pointer-events:none;font-size:11px;font-weight:600;color:#fff;' +
+        'background:rgba(0,0,0,0.75);padding:2px 8px;border-radius:100px;' +
+        'border:1px solid rgba(245,197,25,0.5);white-space:nowrap;' +
+        'transform:translate(-50%,-290%);transition:opacity 0.12s;';
+      el.textContent = c.name;
+      wrap.appendChild(el);
+      return el;
+    });
+
+    // Edge indicators
+    const edges = CITIES.map(() => {
+      const el = document.createElement('div');
+      el.className = 'edge-indicator';
+      el.textContent = '›';
+      el.style.display = 'none';
+      wrap.appendChild(el);
+      return el;
+    });
+
+    function getXY(e) {
+      const r = wrap.getBoundingClientRect();
+      const s = e.touches ? e.touches[0] : e;
+      return [s.clientX - r.left, s.clientY - r.top];
+    }
+
+    function handleTap(tx, ty) {
+      const R = Math.min(W, H) * 0.4;
+      const cx = W / 2, cy = H / 2;
+      CITIES.forEach(c => {
+        const pt = rot(ll3(c.lat, c.lng), rotX, rotY);
+        if (pt[2] <= 0) return;
+        const sx = cx + pt[0] * R;
+        const sy = cy - pt[1] * R;
+        if (Math.hypot(tx - sx, ty - sy) < 22) {
+          selectedEl.textContent = '📍 ' + c.name;
+          selectedEl.style.opacity = '1';
+          clearTimeout(selectedEl._t);
+          selectedEl._t = setTimeout(() => { selectedEl.style.opacity = '0'; }, 2500);
+        }
+      });
+    }
+
+    wrap.addEventListener('mousedown', e => {
+      dragging = true; moved = false; [lastX, lastY] = getXY(e);
+    });
+    wrap.addEventListener('touchstart', e => {
+      dragging = true; moved = false; [lastX, lastY] = getXY(e);
+      if (e.cancelable) e.preventDefault();
+    }, { passive: false });
+    window.addEventListener('mousemove', e => {
+      if (!dragging) return;
+      const [x, y] = getXY(e);
+      const dx = x - lastX, dy = y - lastY;
+      if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
+      velY = dx * 0.008; velX = -dy * 0.008;
+      rotY += velY; rotX += velX;
+      lastX = x; lastY = y;
+    });
+    window.addEventListener('touchmove', e => {
+      if (!dragging) return;
+      const [x, y] = getXY(e);
+      const dx = x - lastX, dy = y - lastY;
+      if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
+      velY = dx * 0.008; velX = -dy * 0.008;
+      rotY += velY; rotX += velX;
+      lastX = x; lastY = y;
+      if (e.cancelable) e.preventDefault();
+    }, { passive: false });
+    window.addEventListener('mouseup', e => {
+      if (!moved) { const [tx, ty] = getXY(e); handleTap(tx, ty); }
+      dragging = false;
+    });
+    window.addEventListener('touchend', e => {
+      if (!moved) {
+        const r = wrap.getBoundingClientRect();
+        const t0 = e.changedTouches[0];
+        handleTap(t0.clientX - r.left, t0.clientY - r.top);
+      }
+      dragging = false;
+    });
+
+    function draw() {
+      if (W === 0 || H === 0) return;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+
+      const cx = W / 2, cy = H / 2;
+      const R = Math.min(W, H) * 0.4;
+      const mg = 38;
+
+      // Sphere fill
+      const grad = ctx.createRadialGradient(cx - R*0.28, cy - R*0.28, R*0.04, cx, cy, R);
+      grad.addColorStop(0, '#1c1c1c');
+      grad.addColorStop(1, '#0a0a0a');
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Clip grid to sphere
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, R - 0.5, 0, Math.PI * 2);
+      ctx.clip();
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.lineWidth = 0.8;
+
+      // Latitude lines
+      [-60,-30,0,30,60].forEach(latDeg => {
+        const lat = latDeg * Math.PI / 180;
+        let inLine = false;
+        ctx.beginPath();
+        for (let i = 0; i <= 120; i++) {
+          const lng = (i / 120) * Math.PI * 2 - Math.PI;
+          const pt = rot(ll3(lat, lng), rotX, rotY);
+          const x = cx + pt[0] * R, y = cy - pt[1] * R;
+          if (pt[2] > 0) {
+            if (!inLine) { ctx.moveTo(x, y); inLine = true; }
+            else ctx.lineTo(x, y);
+          } else { inLine = false; }
+        }
+        ctx.stroke();
+      });
+
+      // Longitude lines
+      for (let lngDeg = -180; lngDeg < 180; lngDeg += 30) {
+        const lng = lngDeg * Math.PI / 180;
+        let inLine = false;
+        ctx.beginPath();
+        for (let i = 0; i <= 60; i++) {
+          const lat = (-90 + (i / 60) * 180) * Math.PI / 180;
+          const pt = rot(ll3(lat, lng), rotX, rotY);
+          const x = cx + pt[0] * R, y = cy - pt[1] * R;
+          if (pt[2] > 0) {
+            if (!inLine) { ctx.moveTo(x, y); inLine = true; }
+            else ctx.lineTo(x, y);
+          } else { inLine = false; }
+        }
+        ctx.stroke();
+      }
+
+      ctx.restore();
+
+      // Sphere rim
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // City pins + labels + edges
+      CITIES.forEach((c, i) => {
+        const pt = rot(ll3(c.lat, c.lng), rotX, rotY);
+        const sx = cx + pt[0] * R;
+        const sy = cy - pt[1] * R;
+        const vis = pt[2] > 0;
+
+        if (vis) {
+          // Pulsing ring
+          const pulse = 0.7 + 0.3 * Math.sin(tick * 2.2 + i * 1.3);
+          ctx.beginPath();
+          ctx.arc(sx, sy, 11 * pulse, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(245,197,25,${0.35 * pulse})`;
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          // Dot
+          ctx.beginPath();
+          ctx.arc(sx, sy, 5.5, 0, Math.PI * 2);
+          ctx.fillStyle = '#F5C519';
+          ctx.fill();
+        }
+
+        // Label
+        labels[i].style.opacity = vis ? '1' : '0';
+        if (vis) {
+          labels[i].style.left = sx + 'px';
+          labels[i].style.top = sy + 'px';
+        }
+
+        // Edge indicator
+        const offscreen = !vis || sx < mg || sx > W - mg || sy < mg || sy > H - mg;
+        if (offscreen) {
+          const angle = Math.atan2(sy - cy, sx - cx);
+          const rr = Math.min(W, H) * 0.42;
+          const ex = cx + Math.cos(angle) * rr;
+          const ey = cy + Math.sin(angle) * rr;
+          edges[i].style.display = 'flex';
+          edges[i].style.left = (ex - 13) + 'px';
+          edges[i].style.top  = (ey - 13) + 'px';
+          edges[i].style.transform = `rotate(${angle * 180 / Math.PI}deg)`;
+        } else {
+          edges[i].style.display = 'none';
+        }
+      });
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      tick += 0.016;
+      if (!dragging) {
+        velX *= 0.92; velY *= 0.92;
+        if (Math.abs(velX) + Math.abs(velY) < 0.0005) velY = 0.004;
+        rotX += velX; rotY += velY;
+      }
+      rotX = Math.max(-1.3, Math.min(1.3, rotX));
+      draw();
+    }
+
+    window.addEventListener('resize', () => { setSize(); });
+    animate();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>

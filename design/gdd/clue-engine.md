@@ -1,8 +1,8 @@
 # Clue Engine
 
-> **Status**: Designed — pending review
+> **Status**: Approved — reviewed 2026-03-25
 > **Author**: Product Director + Claude
-> **Last Updated**: 2026-03-24
+> **Last Updated**: 2026-03-25
 > **Implements Pillar**: Pillar 1 — Deduction Over Trivia
 
 ## Overview
@@ -41,16 +41,15 @@ to decode.
 #### Part 1: Runtime Routing
 
 The Clue Engine has one runtime responsibility: given the player's current position
-in a case, return the correct clue string.
+in a case, return the correct clue object.
 
 1. The Clue Engine reads the active case from the Case Database via Game State Manager.
 2. At the start of each move, it receives from Game State Manager:
-   - `currentLegIndex` (integer, 0–3): which leg the player is currently on
+   - `currentLegIndex` (integer, 1–4): which leg the player is currently on
    - `previousMoveWasCorrect` (boolean): whether the player's last city choice was correct
-3. **If `currentLegIndex === 0` or `previousMoveWasCorrect === true`**: return `legs[currentLegIndex].clue_text`
-4. **If `previousMoveWasCorrect === false`**: return `legs[currentLegIndex].recovery_clue_text`
-5. The returned string is passed to the UI for display. The Clue Engine does not format,
-   annotate, or transform the string.
+3. **If `currentLegIndex === 1` or `previousMoveWasCorrect === true`**: return `legs[currentLegIndex].clue_text` and `legs[currentLegIndex].signals`
+4. **If `previousMoveWasCorrect === false`**: return `legs[currentLegIndex].recovery_clue_text` and `legs[currentLegIndex].signals`
+5. The returned object `{ clue_text, signals }` is passed to the UI for display. The Clue Engine does not format, annotate, or transform either field.
 6. **Previous clues are not shown.** Only the current clue is displayed. Each clue must
    be independently sufficient to support a reasoned decision without the player
    reviewing their history.
@@ -62,16 +61,19 @@ in a case, return the correct clue string.
 Each leg has a required specificity level. Clues authored at the wrong specificity level
 for their position are invalid.
 
-| Leg | Specificity | What the clue must do | Wrong options may span |
-|---|---|---|---|
-| 1 | **Broad** | Narrow to a continent or major global region | Different regions |
-| 2 | **Medium** | Narrow to a sub-region or country cluster within the broad region | Same region as Leg 1 |
-| 3 | **Medium-Precise** | Narrow to 2–5 plausible cities in a sub-region | Same sub-region; all plausible from the clue |
-| 4 | **Precise** | Narrow to 1–2 plausible cities; the Aha moment must be achievable here | Same sub-region; plausible on first read, fail under careful reasoning |
+| Leg | Specificity | What the clue must do | Wrong options may span | Example clue |
+|---|---|---|---|---|
+| 1 | **Broad** | Narrow to a continent or major global region | Different regions | *"The suspect was last seen boarding a flight toward a cold, landlocked country with a strong industrial heritage."* |
+| 2 | **Medium** | Narrow to a sub-region or country cluster within the broad region | Same region as Leg 1 | *"The trail leads to a coastal city in a temperate climate — a working port, not a tourist destination."* |
+| 3 | **Medium-Precise** | Narrow to 2–5 plausible cities in a sub-region | Same sub-region; all plausible from the clue | *"A mid-sized city surrounded by forested hills, known for its shipbuilding past and deep natural harbour."* |
+| 4 | **Precise** | Narrow to 1–2 plausible cities; the Aha moment must be achievable here | Same sub-region; plausible on first read, fail under careful reasoning | *"The harbour curves around a natural bay; the city sits on a peninsula with a distinctive hilltop fortress visible from the water."* |
 
 **Stand-alone sufficiency rule**: Because previous clues are not shown, each clue
 must carry enough independent signal for a player to form a reasoned decision. No
 clue may rely on the player remembering a previous clue to make sense of the current one.
+
+**Constraint**: Leg 1 = Broad, Leg 2 = Medium, Leg 3 = Medium-Precise, Leg 4 = Precise.
+Authors cannot publish a Broad clue at Leg 4 or a Precise clue at Leg 1.
 
 ---
 
@@ -119,6 +121,11 @@ was seen exchanging a currency whose symbol combines the letters H and R" is ded
 (the player reasons to the currency). "The suspect was exchanging Hryvnia" is not
 (the player must already know Hryvnia is Ukrainian).
 
+**Authoring brevity rule**: Text carries only what visuals cannot. If the UI communicates
+a signal through an icon or city visual (e.g. a climate tag, terrain icon, or cultural
+artifact), do not repeat that signal in clue text. A clue that describes in words what
+the visual layer already shows is too long. When in doubt, cut.
+
 ---
 
 #### Part 4: Recovery Clue Rules
@@ -135,6 +142,11 @@ Authoring rules for a valid recovery clue:
 4. Must feel like the field is narrowing, not like the answer is given.
 5. Must independently satisfy the stand-alone sufficiency rule (no dependency
    on the player remembering `clue_text`).
+
+**Recovery clue invisibility**: The player is not informed they received a recovery
+clue. The help is invisible by design. Players who receive a recovery clue must not
+feel penalised or called out — the experience should feel like the trail sharpened,
+not like the game intervened.
 
 ---
 
@@ -159,33 +171,33 @@ passed in at call time. The Clue Engine reads, routes, and returns.
 
 | Input State | Condition | Output |
 |---|---|---|
-| Leg 0, any | First move of the case | `legs[0].clue_text` |
-| Leg N, previous correct | Player got the last city right | `legs[N].clue_text` |
-| Leg N, previous wrong | Player got the last city wrong | `legs[N].recovery_clue_text` |
+| Leg 1, any | First move of the case | `{ legs[1].clue_text, legs[1].signals }` |
+| Leg N, previous correct | Player got the last city right | `{ legs[N].clue_text, legs[N].signals }` |
+| Leg N, previous wrong | Player got the last city wrong | `{ legs[N].recovery_clue_text, legs[N].signals }` |
 
 ### Interactions with Other Systems
 
 | System | Direction | What flows |
 |---|---|---|
-| **Case Database** | Clue Engine reads | `clue_text` and `recovery_clue_text` per leg of the active case |
-| **Game State Manager** | Provides input to Clue Engine | `currentLegIndex` (0–3) and `previousMoveWasCorrect` (boolean) at each move |
-| **City Selection** | Receives from Clue Engine | The clue string — City Selection displays it alongside the city options (contract: Clue Engine returns a plain string; City Selection owns display) |
-| **Feedback System** | Receives from Clue Engine | The clue string for the next leg, revealed after a correct move as the confirmation signal |
+| **Case Database** | Clue Engine reads | `clue_text`, `recovery_clue_text`, and `signals` per leg of the active case |
+| **Game State Manager** | Provides input to Clue Engine | `currentLegIndex` (1–4) and `previousMoveWasCorrect` (boolean) at each move |
+| **City Selection** | Receives from Clue Engine | `{ clue_text, signals }` — City Selection displays clue text and renders signal icons; display and layout are City Selection's responsibility |
+| **Feedback System** | Receives from Clue Engine | `{ clue_text, signals }` for the next leg, revealed after a correct move as the confirmation signal |
 
 **Interface contract with City Selection and Feedback System**:
-The Clue Engine returns a single string. It does not know how the string will be
-displayed. Formatting, animation, and layout are the responsibility of the
-consuming system.
+The Clue Engine returns `{ clue_text: string, signals: string[] }`. It does not know
+how these will be displayed. Formatting, animation, icon rendering, and layout are
+the responsibility of the consuming system.
 
 ## Formulas
 
 The Clue Engine performs no mathematical calculations at runtime. It is a routing
-system — input state → output string. All "formulas" are authoring constraints:
+system — input state → output object. All "formulas" are authoring constraints:
 
 ### Clue Specificity Progression
 
 ```
-specificity(leg_N) > specificity(leg_N-1)   for all N in 1..3
+specificity(leg_N) > specificity(leg_N-1)   for all N in 2..4
 ```
 
 Each leg's clue must be strictly more specific than the previous leg's clue.
@@ -194,10 +206,10 @@ Qualitative levels: Broad < Medium < Medium-Precise < Precise.
 | Variable | Values | Description |
 |---|---|---|
 | `specificity(leg)` | Broad / Medium / Medium-Precise / Precise | Required specificity level by position |
-| `leg_N` | 0–3 | Leg index |
+| `leg_N` | 1–4 | Leg index |
 
-**Constraint**: Leg 0 = Broad, Leg 1 = Medium, Leg 2 = Medium-Precise, Leg 3 = Precise.
-Authors cannot publish a Broad clue at Leg 3 or a Precise clue at Leg 0.
+**Constraint**: Leg 1 = Broad, Leg 2 = Medium, Leg 3 = Medium-Precise, Leg 4 = Precise.
+Authors cannot publish a Broad clue at Leg 4 or a Precise clue at Leg 1.
 
 ### Recovery Clue Explicit Delta
 
@@ -214,19 +226,24 @@ during case review.
 | Scenario | Expected Behavior | Rationale |
 |---|---|---|
 | `recovery_clue_text` is null/empty for a leg | Fall back to `clue_text`; log an authoring error | Recovery clue is required in MVP schema; absence is an authoring failure but must not crash the game |
-| Player is on Leg 0 and `previousMoveWasCorrect` is false (impossible state) | Serve `clue_text`; log a state error | Leg 0 has no previous move — this state should never occur; treat as first move |
-| `currentLegIndex` is out of bounds (>3) | Do not serve a clue; trigger Win/Fail State resolution | The case is complete; Clue Engine responsibility ends at Leg 3 |
+| Player is on Leg 1 and `previousMoveWasCorrect` is false (impossible state) | Serve `clue_text`; log a state error | Leg 1 has no previous move — this state should never occur; treat as first move |
+| `currentLegIndex` is out of bounds (>4) | Do not serve a clue; trigger Win/Fail State resolution | The case is complete; Clue Engine responsibility ends at Leg 4 |
 | Clue text is empty string | Do not display a blank clue card; show an error placeholder and log | Empty clues are authoring failures; the player must always have something to read |
 | Two consecutive wrong moves | Leg N recovery clue is served again on Leg N+1 if that move was also wrong | Each leg is evaluated independently — consecutive wrong moves do not escalate or change the routing logic |
+| `signals` is null/empty for a leg | Serve `clue_text` with an empty signals array; no icons rendered | Signals are optional per leg — absence is valid, not an error |
 
 ## Dependencies
 
 | System | Direction | Nature of Dependency |
 |---|---|---|
-| **Case Database** | Clue Engine depends on | Source of all clue content (`clue_text`, `recovery_clue_text` per leg) |
+| **Case Database** | Clue Engine depends on | Source of all clue content (`clue_text`, `recovery_clue_text`, `signals` per leg) |
 | **Game State Manager** | Clue Engine depends on | Provides `currentLegIndex` and `previousMoveWasCorrect` at runtime *(provisional — Game State Manager GDD not yet written)* |
-| **City Selection** | Depends on Clue Engine | Receives the current clue string to display alongside city options |
-| **Feedback System** | Depends on Clue Engine | Receives the next leg's clue string to reveal as the confirmation signal after a correct move |
+| **City Selection** | Depends on Clue Engine | Receives `{ clue_text, signals }` to display clue text and render signal icons |
+| **Feedback System** | Depends on Clue Engine | Receives `{ clue_text, signals }` for the next leg to reveal as the confirmation signal after a correct move |
+
+**Case Database follow-up**: The Case Database Leg schema requires a `signals` field
+(string[], optional) to be added. This is a minor schema update to an approved doc —
+no structural changes to Case Database design.
 
 ## Tuning Knobs
 
@@ -236,43 +253,51 @@ during case review.
 | Required Aha moment leg position | Leg 3 or 4 (target) | Legs 2–4 acceptable | Earlier Aha moments feel more satisfying but reduce tension arc | Later-only Aha moments risk the Precise clue being too obscure |
 | Wrong options (plausibility floor) | At least 1 per leg passes reasonable inference test | 1–all options | All options plausible = maximum deduction challenge; may feel unfair | No plausible wrong options = trivial elimination, no real deduction |
 | Recovery clue explicitness delta | 1 inferential step simpler | 1–2 steps simpler | Easier recovery; reduces tension | Same as primary clue = no benefit to recovery path |
+| Signals per leg | 1–3 tags | 0–5 | More icons = richer visual layer but cluttered UI | 0 = text-only; acceptable for some clues |
 
 ## Visual/Audio Requirements
 
-The Clue Engine returns a plain string. Visual and audio requirements belong to
-the UI systems that consume it.
+The Clue Engine returns `{ clue_text, signals }`. Visual and audio requirements belong
+to the UI systems that consume it.
 
 | Event | Responsibility |
 |---|---|
-| Primary clue display | City Selection UI — displays clue text prominently above city options |
-| Recovery clue display | City Selection UI — same display position; no visual distinction from primary clue (the player should not feel labelled as having failed) |
+| Primary clue text display | City Selection UI — displays clue text prominently above city options |
+| Signal icon rendering | City Selection UI — renders one icon per signal tag from the project's signal icon set |
+| Recovery clue display | City Selection UI — same display position and visual treatment as primary clue; no distinction shown to player |
 | Clue reveal animation | Animation System — fade/slide in; governed by Framer Motion |
 
 ## UI Requirements
 
-The Clue Engine outputs a string. All UI decisions are owned by the consuming system.
-One constraint: recovery clue text must NOT be visually distinguished from primary clue
-text. Players who receive a recovery clue must not feel penalised or called out.
-The help is invisible.
+The Clue Engine outputs `{ clue_text, signals }`. All UI decisions are owned by the
+consuming system. Two constraints:
+
+1. Recovery clue text must NOT be visually distinguished from primary clue text.
+   Players who receive a recovery clue must not feel penalised or called out.
+   The help is invisible.
+2. Signal icons must be rendered from a finite, project-defined tag vocabulary.
+   Unknown tag values should render nothing (no broken icon).
 
 ## Acceptance Criteria
 
 **Runtime:**
-- [ ] Given `currentLegIndex = 0`, always returns `legs[0].clue_text` regardless of `previousMoveWasCorrect`
-- [ ] Given `currentLegIndex = N` and `previousMoveWasCorrect = true`, returns `legs[N].clue_text`
-- [ ] Given `currentLegIndex = N` and `previousMoveWasCorrect = false`, returns `legs[N].recovery_clue_text`
+- [ ] Given `currentLegIndex = 1`, always returns `legs[1].clue_text` and `legs[1].signals` regardless of `previousMoveWasCorrect`
+- [ ] Given `currentLegIndex = N` and `previousMoveWasCorrect = true`, returns `legs[N].clue_text` and `legs[N].signals`
+- [ ] Given `currentLegIndex = N` and `previousMoveWasCorrect = false`, returns `legs[N].recovery_clue_text` and `legs[N].signals`
 - [ ] If `recovery_clue_text` is null/empty, falls back to `clue_text` and logs an error without crashing
-- [ ] Returns a non-empty string for all valid leg states
+- [ ] If `signals` is null/empty, returns an empty array without crashing
+- [ ] Returns a non-empty `clue_text` string for all valid leg states
 - [ ] Clue Engine response time: under 5ms (pure data lookup, no computation)
 
 **Authoring validation (case review):**
 - [ ] Every case has been reviewed against all 4 Clue Validity Principles before publish
 - [ ] Every leg has a `reasoning_chain` recorded (strongly required)
-- [ ] Leg 0 clue is Broad; Leg 1 is Medium; Leg 2 is Medium-Precise; Leg 3 is Precise
+- [ ] Leg 1 clue is Broad; Leg 2 is Medium; Leg 3 is Medium-Precise; Leg 4 is Precise
 - [ ] Every case has at least one identified Aha moment leg (Leg 2, 3, or 4)
 - [ ] No clue uses a named landmark, language/alphabet, historical event, population stat, or currency name unless the conditional safety rule is satisfied and documented
 - [ ] Every `recovery_clue_text` is more explicit than its corresponding `clue_text` by at least one inferential step
 - [ ] Recovery clue does not visually differ from primary clue in any authored attribute
+- [ ] Clue text does not repeat signals already communicated by the `signals` icon layer
 
 **Playtest validation (10 test cases):**
 - [ ] At least 8/10 non-geography-expert playtesters can follow the reasoning chain when explained
@@ -286,3 +311,4 @@ The help is invisible.
 | Does Game State Manager expose exactly `currentLegIndex` and `previousMoveWasCorrect`, or a different interface? | Game State Manager GDD author | **OPEN** | Provisional interface assumed here; must be confirmed when Game State Manager GDD is written |
 | Should the clue specificity levels (Broad/Medium/Medium-Precise/Precise) be formally tagged in the Case Database schema, or remain authoring guidelines only? | Product Director | **OPEN** | If tagged, the system can auto-validate specificity progression at authoring time. If guidelines only, validation is manual during case review. Recommend: tagging in Vertical Slice when authoring tooling is built. |
 | Should the Aha moment leg be identified and tagged in the Case Database for analytics purposes? | Product Director | **DEFERRED** | Useful for measuring Aha moment occurrence in playtesting; resolve when analytics system is designed. |
+| Should `clue_text` be a plain string or structured data? | Product Director | **CLOSED** | Structured: `{ clue_text: string, signals: string[] }`. Plain string is insufficient once the visual/icon layer is part of the design. The `signals` array enables automatic icon rendering without bespoke UI per case. City-level visual assets (flag, landmark, artifact, cultural dress, currency) live on the City entity in the Case Database and are separate from per-leg signals. |

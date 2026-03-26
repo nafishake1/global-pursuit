@@ -1,7 +1,8 @@
 # Game Concept: Global Pursuit
 
 *Created: 2026-03-24*
-*Status: Approved — Creative Director reviewed 2026-03-24*
+*Last Updated: 2026-03-25*
+*Status: Approved — core loop updated 2026-03-25*
 
 ---
 
@@ -32,8 +33,10 @@
 ## Core Fantasy
 
 You are the only detective sharp enough to follow the trail. While everyone
-else sees noise, you see signal. Each clue is a thread — and you pull until
-the suspect has nowhere left to run.
+else sees noise, you see signal. The criminal is larger-than-life — a
+showboating globe-trotter who leaves a trail of clues like a calling card,
+always one step ahead until suddenly, theatrically, they're not. Each clue
+is a thread — and you pull until the suspect has nowhere left to run.
 
 > **"You don't need to know the world. You need to read it."**
 
@@ -77,10 +80,10 @@ evolving signals, not memorizing capitals.
 ### Core Mechanics (Systems we build)
 
 1. **Signal Funnel** — Clues evolve from broad (region, climate, economy) to precise (near-identifiers) across 4 moves, tightening the decision space with each step
-2. **Constrained Choice** — 3–5 city options per move; no open map guessing; forces elimination and commitment
+2. **Constrained Choice** — 3–5 city pins are highlighted on the globe per move; the player spins and explores to find them all. Only pinned cities are selectable — no open guessing. The act of finding the pins is part of the experience.
 3. **Dead-End Design** — Wrong cities yield no information and no penalty beyond move efficiency; tension without punishment
 4. **Path Efficiency Scoring** — Score is optimal moves vs actual moves; the skill layer that drives repeat play and competitive sharing
-5. **Globe Visualization** — The world is the game board; a tactile, interactive globe surface is the primary visual (informed by MapTap.gg's player engagement with globe interaction)
+5. **Globe as Game Board** — The globe is not decoration. It IS the selection UI. Players spin it to find highlighted city pins and tap to commit. The tactile act of spinning the globe to hunt for options is a core part of the feel. Discoverability mechanic required: players must know how many pins exist and roughly where to find them (counter + edge indicators).
 
 ---
 
@@ -105,24 +108,50 @@ evolving signals, not memorizing capitals.
 
 - **Onboarding curve**: Case brief + first clue is self-explanatory; 30-second implicit tutorial; no explicit instructions needed
 - **Difficulty scaling**: Case difficulty varies by design (not adaptive); harder cases use less obvious clue categories — mirrors MapTap's difficulty progression model
-- **Feedback clarity**: Correct = strong directional clue that confirms the trail; Wrong = neutral dead-end ("No one here has seen the suspect")
-- **Recovery from failure**: No lives, no retry; fail state is a learning moment, not a punishment
+- **Feedback clarity**: Correct = strong directional clue that confirms the trail; Wrong = player flies to the wrong city, a witness there says "Haven't seen anyone matching that description," and the city is greyed out on the globe
+- **Recovery from failure**: Wrong city guesses are narrative dead ends — the player flies there, hears from a witness that nobody matching the description has been seen, and the city is greyed out on the globe. No lives lost. No new clue given. Try again.
 
 ---
 
 ## Core Loop
 
+### Confirmed Core Loop
+
+1. **Case Brief**: CIA Director gives the player the crime and the starting city (e.g. Paris). No choice — you go there.
+2. **Arrive at city**: 3 witnesses are waiting. Player taps to reveal each clue one at a time. Witness 1 is broadest, Witness 3 is most specific.
+3. **Globe selection**: The correct city + 4–5 decoys are highlighted as pins on the globe. Player spins the globe to find all pins, taps their guess.
+4. **Wrong guess**: Player flies to the wrong city. A witness there says "Haven't seen anyone matching that description." Wrong city gets greyed out on the globe. Player tries again.
+5. **Right guess**: Flight animation to the correct city. Proceed to next round.
+6. **Repeat for 4 rounds total** (after visiting Paris).
+7. **Round 4**: Player arrives at the capture city. The criminal is there. Theatrical arrest sequence.
+
+Key details:
+- Starting city (Paris) is given — it is NOT one of the 4 rounds
+- 4 rounds after Paris = 4 globe selections = 4 legs
+- 3 witnesses per round, revealed by tapping (not all shown at once)
+- Wrong guess = fly there + narrative response + try again (no lives lost, just efficiency score hit)
+- No recovery clue mechanic — wrong guess just means pick again with wrong city greyed out
+
 ### Moment-to-Moment (30 seconds)
-Read clue → evaluate 3–5 city options → commit to one → receive feedback.
-The core action is clue interpretation: extracting inferential signal from
-language and mapping it to geography under time pressure. This must feel
-instinctive, not studious.
+Arrive at city → tap to reveal 3 witness clues → spin globe to find highlighted pins → tap your guess → fly to that city (right or wrong) → repeat. The core action is clue interpretation: extracting inferential signal from 3 witnesses and mapping it to a city on the globe. Wrong guesses cost efficiency, not lives.
 
 ### Short-Term (2–5 minutes)
-One complete case: 4 moves maximum, one correct final capture. The player
-triangulates a moving target across legs, with each correct move sharpening
-the next clue. Tension peaks at move 3–4 when options narrow and mistakes
-are irreversible.
+One complete case: the criminal is always one step ahead — until they're not.
+The player chases a globe-trotting criminal across 4 rounds. At each stop,
+they arrive just after the criminal has fled, tapping witnesses one by one to
+build a picture of where they've gone next. Round 4 is the capture: the
+player has finally predicted right — they arrive and the criminal is still there.
+
+The criminal's route is not geographically constrained. Tokyo → Buenos Aires
+→ Oslo → Bangkok is a valid case. The globe-trotting IS the fantasy. Players
+should feel like they're chasing a ghost around the whole world — until the
+moment they finally corner them.
+
+**Narrative framing per move:**
+- Correct (Rounds 1–3): "You just missed them. But they left something behind." → next round begins
+- Wrong (Rounds 1–3): Player flies to wrong city. Witness says "Haven't seen anyone matching that description." City greyed out. Try again.
+- Round 4 correct: "They're here. You've got them." → theatrical arrest sequence
+- Round 4 wrong: "Gone again. They were one step ahead." → city greyed out, try again
 
 ### Session-Level
 Single daily puzzle. Opens in under 2 seconds, plays in under 5 minutes,
@@ -149,11 +178,54 @@ Clue design, animation pacing, and sound must reinforce each beat:
 
 | Move | Emotional Beat | What Delivers It |
 |---|---|---|
-| Case Brief | Curiosity + Orientation | Crime, city, first clue — orient, don't overwhelm |
-| Move 1 | Confidence or Doubt | "I think I see the pattern" vs "I need more signal" |
-| Move 2–3 | Tightening Tension | Options narrow; stakes feel real; commitment matters |
-| Move 4 | Resolution | Win: satisfaction + pride. Fail: rueful recognition |
-| Share screen | Pride or Rueful Amusement | "Look at my path" / "I'll get it tomorrow" |
+| Case Brief | Delight + The Hunt Begins | CIA Director delivers the crime and starting city — campy, theatrical, not dry. The criminal is already larger-than-life. |
+| Round 1 | On the Trail | "I think I see where they're headed" — tapping witnesses builds the picture; committing to a pin feels bold |
+| Rounds 2–3 | The Chase Tightens | The criminal keeps fleeing; each witness round brings you closer; the globe shrinks; commitment feels real and fun |
+| Round 4 | The Capture | You've cornered them. Theatrical, triumphant, satisfying — like a punchline landing. Win: showboating arrest. Miss: greyed-out city, try again. |
+| Share screen | Pride or Rueful Amusement | "Look at my chase" / "I'll get them tomorrow" |
+
+### The Capture Moment
+
+The capture is the emotional payoff of every session. It is not a correct guess — it is an arrival. Round 4's correct city is where the criminal is caught. Design it accordingly.
+
+**The sequence (in order):**
+
+1. **The Correct Tap** — Player taps the right city pin on Round 4. Globe animates immediately — the pin lights up, a flight arc traces from the previous city to the capture city. No delay.
+
+2. **The Arrival** — The globe spins to center the capture city. A beat. Then:
+
+3. **The Director Line** — CIA Director delivers capture confirmation in their theatrically dramatic register:
+   - "Outstanding. They had a twelve-hour head start and you caught them anyway. Case closed."
+   - "I knew it. I always know. Excellent work, Agent."
+   - "Every agent we have, and it takes you. Of course it does. Case closed."
+   The line is short. The drama is in the brevity.
+
+4. **The Route Reveal** — The full criminal route animates across the globe: flight arcs trace from starting city → leg 1 → leg 2 → leg 3 → capture city. Animated in sequence, not all at once. This is the theatrical "here's what just happened" beat.
+
+5. **The Score** — Path Efficiency % revealed with appropriate weight. 100% gets a different treatment than 60%.
+
+6. **The Share Card** — Generated immediately. Format follows NYT Games model:
+   - Criminal alias + crime in one line
+   - Efficiency score
+   - Route represented as emoji dots/arrows (no city names — no spoilers)
+   - "Global Pursuit · [date]"
+
+**Juice requirements for the capture moment (Pillar 5):**
+- The correct tap should fire haptic feedback immediately
+- The Director line should have a distinct sound design signature (different from mid-game sounds)
+- The route reveal animation should feel earned — slightly slower than normal game speed
+- The share card reveal should have a satisfying animation (stamp, slide in, or flip)
+- The whole sequence from correct tap to share card ready should not exceed 4 seconds
+
+**What the capture moment is NOT:**
+- It is not a celebration screen with confetti and balloons (wrong register — too casual)
+- It is not punishing or anticlimactic (efficiency score is not the headline — the arrest is)
+- It is not slow — theatricality is not the same as delay
+
+**Wrong guess on Round 4:**
+The stakes are highest on Round 4. A wrong guess here should feel different from a wrong guess on Round 1. The wrong-city witness response on Round 4 should be the most pointed version — "They were here. They are not anymore." The city greys out. The remaining pins pulse once. The player knows they're close.
+
+---
 
 ### The "Aha" Moment — Required Design Criterion
 
@@ -206,6 +278,22 @@ Pure performance signal. One glance should create FOMO.
 *Design test*: "Would someone who has never played this game want to try
 it based on this share card alone?"
 
+### Pillar 5: Juice Without Lag
+
+Every correct action is rewarded immediately — visually, sonically, and haptically.
+Animations, sounds, and haptics fire on input, never after. State advances without
+waiting for feedback to finish; the juice plays *over* a fast game, never *instead*
+of one. The emotional register is theatrical and satisfying — the dramatic reveal,
+the villain caught mid-escape. Think fanfare and flair: campy, bold, fun. The juice
+should feel like the punchline landing. Players should feel like a detective who just
+outsmarted a showboating criminal, not a student getting a gold star.
+
+*Design test*: "Does this feedback fire the instant the player acts? Does it feel
+theatrical and purposeful — like a payoff — or generic and decorative? If an
+animation were removed, would the game feel less fun — or just less busy?"
+
+---
+
 ### Anti-Pillars (What This Game Is NOT)
 
 - **NOT a trivia game**: Knowing capitals, currencies, and geography facts should
@@ -216,6 +304,9 @@ it based on this share card alone?"
   states. Tension comes from efficiency pressure, not existential stakes.
 - **NOT complex**: If onboarding takes more than 30 seconds, the design is wrong.
   Immediately playable on first encounter.
+- **NOT slow feedback**: Juice that delays state or blocks interaction is lag in
+  disguise. Animations that make the player wait are failures of design, not
+  successes of polish.
 
 ---
 
@@ -306,7 +397,7 @@ game helps you recover" without introducing geographic proximity as a signal.
 | **Art Pipeline Complexity** | Low-medium (custom 2D/globe map, iconography, motion design) |
 | **Audio Needs** | Minimal — satisfying UI feedback sounds, no music required for MVP |
 | **Networking** | None for MVP (client-side only; daily seed via static JSON or lightweight API) |
-| **Content Volume** | 365 cases/year minimum; 4 clues + 3–5 city options per move per case |
+| **Content Volume** | 365 cases/year minimum; 3 witness clues per round (tap to reveal) + 3–5 city options per round per case |
 | **Procedural Systems** | None planned; cases are hand-authored or AI-assisted with editorial review |
 
 ---
@@ -326,9 +417,12 @@ game helps you recover" without introducing geographic proximity as a signal.
 
 ### Technical Risks
 
-- **Globe/map component complexity**: Interactive city selection with flight path
-  animations may require a canvas/WebGL layer (Pixi.js or MapLibre GL) if DOM/SVG
-  hits performance limits. Must be prototyped in sprint 1 as a technical spike.
+- **Globe/map component complexity**: The globe is now the primary selection UI —
+  players spin it to find highlighted city pins and tap to select. This requires a
+  WebGL/canvas layer (Three.js or MapLibre GL) with touch drag for rotation, raycasting
+  for tap detection on 3D pin positions, edge indicators for off-screen pins, and flight
+  path animations. Significantly more complex than a decorative globe. Must be the
+  first technical spike in Sprint 1 — this is the highest technical risk in the project.
 - **Content pipeline at scale**: 365 cases/year with 4 clues each is significant
   editorial work. AI-assisted authoring pipeline needs its own design sprint before launch.
 
@@ -377,11 +471,10 @@ system GDD is authored. No case may be published without passing all four:
    *Resolve by*: prototyping both and evaluating difficulty variance across test cases.
 3. **Day 2 hook**: What progression mechanic beyond streak sustains long-term habit?
    *Resolve by*: reviewing retention mechanics in comparable daily games (Duolingo, NYT Games).
-4. **Criminal route structure**: Does the criminal have a fixed final destination known
-   at case-creation time, or does the route generate dynamically per player path?
-   *Resolve by*: design doc for the case generation system.
+4. **Criminal route structure**: CLOSED — Option A confirmed. Criminal visits 4 cities in sequence anywhere in the world (globe-spanning). Starting city is given. 4 rounds of investigation follow. Round 4 ends with the capture. Route is fixed at case-creation time.
 5. **City option count variance**: 3–5 options per move (user decision: keep flexible,
    scaled by case difficulty). Define the variance rules in the Clue Engine GDD.
+6. **Capture moment design**: CLOSED — The full capture sequence (correct tap → arrival → Director line → route reveal → score → share card) is now defined in "The Capture Moment" section above.
 
 ---
 
