@@ -1,6 +1,7 @@
 # Game Concept: Global Pursuit
 
 *Created: 2026-03-24*
+*Last Updated: 2026-03-26*
 *Status: Approved — Creative Director reviewed 2026-03-24*
 
 ---
@@ -9,7 +10,7 @@
 
 > A daily deduction game where you track a fleeing criminal across the world —
 > interpreting evolving clues to choose your next destination and capture the
-> target in 4 moves or fewer. Like Wordle's daily ritual, but built around
+> target across exactly 4 legs. Like Wordle's daily ritual, but built around
 > reasoning, not recall.
 
 ---
@@ -31,15 +32,21 @@
 
 ## Core Fantasy
 
-You are the only detective sharp enough to follow the trail. While everyone
-else sees noise, you see signal. Each clue is a thread — and you pull until
-the suspect has nowhere left to run.
+You are the only detective sharp enough to follow the trail. The criminal
+is a showboating globe-trotter — theatrical, flamboyant, always one step
+ahead — and outwitting them should feel as fun as it feels satisfying.
+Each clue is a thread. You pull it. The suspect has nowhere left to run,
+and they know it.
 
 > **"You don't need to know the world. You need to read it."**
 
 This is the single most important sentence in the game. It answers every
 player's first question ("Do I need to be good at geography?") and must be
 delivered in onboarding within the first 5 seconds.
+
+**Tone**: Campy and theatrical — 90s Carmen Sandiego energy. Bold, witty,
+playful. The criminal is a character, not a threat. Cases have flair. The
+detective work is smart; the delivery is fun.
 
 ---
 
@@ -80,6 +87,15 @@ evolving signals, not memorizing capitals.
 2. **Constrained Choice** — 3–5 city options per move; no open map guessing; forces elimination and commitment
 3. **Dead-End Design** — Wrong cities yield no information and no penalty beyond move efficiency; tension without punishment
 4. **Path Efficiency Scoring** — Score is optimal moves vs actual moves; the skill layer that drives repeat play and competitive sharing
+
+   **Path Efficiency formula:**
+   ```
+   Path Efficiency % = max(0, 100 − (totalWrongGuesses × 15) − (totalExtraWitnessesRevealed × 5))
+   ```
+   where `totalExtraWitnessesRevealed` = sum of (witnessesRevealed − 1) across all 4 legs
+   (first witness per leg is free). Guessing correctly after Witness 1 saves 2 × 5 = 10 points
+   compared to revealing all 3 witnesses first.
+
 5. **Globe Visualization** — The world is the game board; a tactile, interactive globe surface is the primary visual (informed by MapTap.gg's player engagement with globe interaction)
 
 ---
@@ -119,10 +135,10 @@ language and mapping it to geography under time pressure. This must feel
 instinctive, not studious.
 
 ### Short-Term (2–5 minutes)
-One complete case: 4 moves maximum, one correct final capture. The player
-triangulates a moving target across legs, with each correct move sharpening
-the next clue. Tension peaks at move 3–4 when options narrow and mistakes
-are irreversible.
+One complete case: exactly 4 legs per case — the route is fixed. The player always
+completes all 4 legs; winning in fewer than 4 is not possible. Wrong guesses add
+to inefficiency but do not skip legs. Tension peaks at move 3–4 when options narrow
+and mistakes are irreversible.
 
 ### Session-Level
 Single daily puzzle. Opens in under 2 seconds, plays in under 5 minutes,
@@ -234,20 +250,24 @@ it based on this share card alone?"
 Global Pursuit occupies the currently empty quadrant on this 2-axis map:
 
 ```
-                    HIGH DEDUCTION
-                          │
-     Global Pursuit ●     │
-                          │
-  Connections ●           │     ● Obra Dinn
-                          │
-──────────────────────────┼──────────────────────
-LOW KNOWLEDGE             │             HIGH KNOWLEDGE
-                          │
-  Wordle ●                │     ● Worldle
-                          │     ● MapTap
-                          │
-                    LOW DEDUCTION
+                         HIGH DEDUCTION
+                               │
+       Global Pursuit ●        │
+      (Moderate Knowledge)     │
+                               │
+  Connections ●                │     ● Obra Dinn
+                               │
+─────────────────────┬─────────┼──────────────────────
+LOW KNOWLEDGE        │ MODERATE│         HIGH KNOWLEDGE
+                     │ KNOWLEDGE
+                               │
+  Wordle ●                     │     ● Worldle
+                               │     ● MapTap
+                               │
+                         LOW DEDUCTION
 ```
+
+> **Positioning note**: Global Pursuit sits at HIGH DEDUCTION / MODERATE KNOWLEDGE. "Moderate" here means: knowledge is not required to finish — a non-expert can always reach the correct answer through reasoning — but geography knowledge is a genuine advantage. Players who know the world score higher and experience the Aha moment earlier. This is intentional design (Pillar 1). The game is NOT positioned at LOW KNOWLEDGE because knowledge actively improves performance; it is NOT positioned at HIGH KNOWLEDGE because no factual recall is required to win.
 
 **Carmen Sandiego positioning note**: Carmen Sandiego is the obvious reference
 and players will make the comparison automatically. The risk: Carmen Sandiego
@@ -276,9 +296,7 @@ violate Pillar 1 (Deduction Over Trivia) and undermine the clean dead-end design
 MapTap's globe visual and progressive difficulty model are valid learnings;
 its scoring model is not applicable here.
 
-**Pillar-consistent alternative**: After a wrong move, the next clue is slightly
-more explicit than it would have been after a correct move. This achieves "the
-game helps you recover" without introducing geographic proximity as a signal.
+~~**Pillar-consistent alternative**: After a wrong move, the next clue is slightly more explicit than it would have been after a correct move.~~ **REMOVED** — Recovery clue mechanic removed from design. Wrong city guesses do not change the clue sequence (see Clue Engine, Core Rule 6). Wrong guesses result in a narrative dead end only.
 
 ---
 

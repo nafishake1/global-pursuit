@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- PROTOTYPE - NOT FOR PRODUCTION -->
-<!-- Question: Does the deduction loop feel satisfying? Do clues produce reasoning or guessing? -->
-<!-- Date: 2026-03-25 -->
+<!-- Question: Does the 3-witness tap-reveal loop feel satisfying? Does the wrong-guess-and-retry flow frustrate or drive engagement? -->
+<!-- Date: 2026-03-25 (updated) -->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -11,7 +11,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: #0d0d14;
+      background: #0d0d0d;
       color: #e5e7eb;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       min-height: 100vh;
@@ -24,8 +24,8 @@
     #app { width: 100%; max-width: 480px; margin-top: 12px; }
 
     .card {
-      background: #1a1a2e;
-      border: 1px solid #2a2a42;
+      background: #1a1a1a;
+      border: 1px solid #2e2e2e;
       border-radius: 16px;
       padding: 24px;
     }
@@ -35,7 +35,7 @@
       font-weight: 700;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: #e8b84b;
+      color: #F5C519;
       margin-bottom: 3px;
     }
 
@@ -46,18 +46,62 @@
       line-height: 1.2;
     }
 
-    .meta {
+    /* iMessage-style Director thread */
+    .director-thread {
       display: flex;
       flex-direction: column;
       gap: 8px;
       margin-bottom: 20px;
     }
 
-    .meta-row { display: flex; gap: 10px; font-size: 13px; line-height: 1.4; }
-    .meta-key { color: #6b7280; min-width: 72px; flex-shrink: 0; font-weight: 500; padding-top: 1px; }
-    .meta-val { color: #e5e7eb; }
+    .director-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
 
-    hr { border: none; border-top: 1px solid #2a2a42; margin: 20px 0; }
+    .director-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #F5C519;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 700;
+      color: #0d0d0d;
+      flex-shrink: 0;
+    }
+
+    .director-name-block { display: flex; flex-direction: column; }
+
+    .director-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #e5e7eb;
+    }
+
+    .director-status {
+      font-size: 10px;
+      color: #52c41a;
+      letter-spacing: 0.04em;
+    }
+
+    .bubble {
+      align-self: flex-start;
+      background: #F5C519;
+      color: #0d0d0d;
+      border-radius: 16px 16px 16px 4px;
+      padding: 10px 14px;
+      font-size: 14px;
+      line-height: 1.5;
+      max-width: 88%;
+      font-weight: 500;
+    }
+
+    hr { border: none; border-top: 1px solid #2e2e2e; margin: 20px 0; }
 
     .section-label {
       font-size: 10px;
@@ -68,20 +112,6 @@
       margin-bottom: 8px;
     }
 
-    .clue-box {
-      background: #0d0d14;
-      border: 1px solid #2a2a42;
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 20px;
-    }
-
-    .clue-text {
-      font-size: 15px;
-      line-height: 1.65;
-      color: #e5e7eb;
-    }
-
     /* Progress */
     .progress-row {
       display: flex;
@@ -89,21 +119,103 @@
       justify-content: space-between;
       margin-bottom: 10px;
     }
-    .progress-dots { display: flex; gap: 5px; }
-    .pdot { width: 28px; height: 3px; border-radius: 2px; background: #2a2a42; }
-    .pdot.active { background: #e8b84b; }
-    .pdot.won    { background: #22c55e; }
-    .pdot.lost   { background: #ef4444; }
+    .progress-dots { display: flex; gap: 6px; }
+    .pdot { width: 28px; height: 4px; border-radius: 2px; background: #2e2e2e; }
+    .pdot.active { background: #F5C519; }
+    .pdot.won    { background: #52c41a; }
+    .pdot.lost   { background: #ff4d4f; }
     .leg-counter { font-size: 12px; color: #6b7280; }
 
+    /* Witness cards */
+    .witnesses-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .witness-card {
+      background: #111111;
+      border: 1px solid #2e2e2e;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .witness-card.revealed {
+      border-left: 3px solid #F5C519;
+    }
+
+    .witness-card.locked {
+      opacity: 0.55;
+    }
+
+    .witness-label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px 6px;
+    }
+
+    .witness-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #6b7280;
+    }
+
+    .witness-card.revealed .witness-label {
+      color: #F5C519;
+    }
+
+    .lock-icon {
+      font-size: 12px;
+      color: #4b5563;
+    }
+
+    .witness-clue {
+      padding: 2px 12px 12px;
+      font-size: 14px;
+      line-height: 1.65;
+      color: #e5e7eb;
+    }
+
+    .reveal-btn {
+      width: 100%;
+      padding: 10px 12px;
+      background: transparent;
+      border: none;
+      border-top: 1px solid #2e2e2e;
+      color: #F5C519;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      letter-spacing: 0.04em;
+      transition: background 0.12s;
+    }
+
+    .reveal-btn:hover {
+      background: rgba(245, 197, 25, 0.06);
+    }
+
     /* City buttons */
+    .city-grid-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #6b7280;
+      margin-bottom: 8px;
+    }
+
     .city-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
 
     .city-btn {
       width: 100%;
       padding: 13px 16px;
-      background: #0d0d14;
-      border: 1px solid #2a2a42;
+      background: #111111;
+      border: 1px solid #2e2e2e;
       border-radius: 8px;
       color: #e5e7eb;
       font-size: 15px;
@@ -115,46 +227,120 @@
       justify-content: space-between;
       transition: border-color 0.12s, background 0.12s;
     }
+
     .city-btn:hover:not(:disabled) {
-      border-color: #e8b84b;
-      background: rgba(232, 184, 75, 0.06);
+      border-color: #F5C519;
+      background: rgba(245, 197, 25, 0.06);
     }
+
     .city-btn:disabled { cursor: default; }
 
     .city-btn.s-correct {
-      border-color: #22c55e;
-      background: rgba(34, 197, 94, 0.1);
-      color: #22c55e;
+      border-color: #52c41a;
+      background: rgba(82, 196, 26, 0.1);
+      color: #52c41a;
     }
-    .city-btn.s-wrong {
-      border-color: #ef4444;
-      background: rgba(239, 68, 68, 0.08);
-      color: #ef4444;
+
+    /* Wrong guess: greyed out with strikethrough */
+    .city-btn.s-eliminated {
+      border-color: #2e2e2e;
+      background: rgba(255, 77, 79, 0.05);
+      color: #4b5563;
+      cursor: default;
+      text-decoration: line-through;
     }
-    .city-btn.s-reveal {
-      border-color: rgba(34, 197, 94, 0.4);
-      background: rgba(34, 197, 94, 0.04);
-      color: rgba(34, 197, 94, 0.5);
+
+    .city-btn .mark { font-size: 14px; min-width: 16px; text-align: right; flex-shrink: 0; }
+
+    /* Salience dot */
+    .salience-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-right: 10px;
     }
-    .city-btn .mark { font-size: 14px; min-width: 16px; text-align: right; }
+
+    .city-btn-inner { display: flex; align-items: center; flex: 1; }
 
     /* Feedback */
     .feedback-box {
       border-radius: 8px;
       padding: 13px 15px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       font-size: 14px;
       line-height: 1.5;
     }
+
     .feedback-box.ok {
-      border: 1px solid #22c55e;
-      background: rgba(34, 197, 94, 0.05);
-      color: #22c55e;
+      border: 1px solid #52c41a;
+      background: rgba(82, 196, 26, 0.06);
+      color: #52c41a;
     }
-    .feedback-box.nope {
-      border: 1px solid #2a2a42;
-      background: rgba(0, 0, 0, 0.2);
-      color: #9ca3af;
+
+    .feedback-box.wrong {
+      border: 1px solid #ff4d4f;
+      background: rgba(255, 77, 79, 0.07);
+      color: #e5e7eb;
+    }
+
+    .feedback-wrong-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #ff4d4f;
+      margin-bottom: 6px;
+    }
+
+    .feedback-wrong-text {
+      font-size: 14px;
+      line-height: 1.5;
+      color: #d1d5db;
+    }
+
+    /* Director confirmation bubble (inline) */
+    .director-confirm {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .director-confirm-avatar {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #F5C519;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #0d0d0d;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .director-confirm-bubble {
+      background: #F5C519;
+      color: #0d0d0d;
+      border-radius: 12px 12px 12px 3px;
+      padding: 8px 12px;
+      font-size: 13px;
+      line-height: 1.4;
+      font-weight: 500;
+      max-width: 88%;
+    }
+
+    .confirm-city-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #0d0d0d;
+      opacity: 0.6;
+      margin-bottom: 2px;
     }
 
     /* Buttons */
@@ -168,23 +354,49 @@
       cursor: pointer;
       transition: opacity 0.12s;
     }
+
     .btn:hover { opacity: 0.88; }
-    .btn-gold  { background: #e8b84b; color: #0d0d14; }
-    .btn-dark  { background: #2a2a42; color: #e5e7eb; }
+    .btn-gold  { background: #F5C519; color: #0d0d0d; }
+    .btn-dark  { background: #2e2e2e; color: #e5e7eb; }
 
     .btn-row { display: flex; gap: 10px; }
     .btn-row .btn { flex: 1; }
 
     /* Result */
     .result-emoji  { text-align: center; font-size: 28px; letter-spacing: 8px; margin: 8px 0 14px; }
-    .result-head   { text-align: center; font-size: 22px; font-weight: 700; margin-bottom: 6px; }
-    .result-head.win  { color: #22c55e; }
-    .result-head.fail { color: #ef4444; }
-    .result-sub    { text-align: center; font-size: 14px; color: #9ca3af; margin-bottom: 24px; }
+    .result-head   { text-align: center; font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+    .result-head.win  { color: #52c41a; }
+    .result-head.fail { color: #ff4d4f; }
+    .result-sub    { text-align: center; font-size: 14px; color: #9ca3af; margin-bottom: 6px; }
+    .result-efficiency { text-align: center; font-size: 32px; font-weight: 700; color: #F5C519; margin-bottom: 4px; }
+    .result-eff-label { text-align: center; font-size: 11px; color: #6b7280; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 20px; }
+
+    .director-capture {
+      background: #111111;
+      border: 1px solid #2e2e2e;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+    }
+
+    .director-capture-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #F5C519;
+      margin-bottom: 8px;
+    }
+
+    .director-capture-text {
+      font-size: 14px;
+      line-height: 1.5;
+      color: #e5e7eb;
+    }
 
     .share-preview {
-      background: #0d0d14;
-      border: 1px solid #2a2a42;
+      background: #111111;
+      border: 1px solid #2e2e2e;
       border-radius: 8px;
       padding: 16px;
       margin-bottom: 16px;
@@ -210,59 +422,158 @@
 <script>
 'use strict';
 // PROTOTYPE - NOT FOR PRODUCTION
-// Question: Does the deduction loop feel satisfying? Do clues produce reasoning or guessing?
-// Date: 2026-03-25
+// Question: Does the 3-witness tap-reveal loop feel satisfying? Does the wrong-guess-and-retry flow frustrate or drive engagement?
+// Date: 2026-03-25 (updated)
 
 // ─── CASE DATA ────────────────────────────────────────────────────────────────
-// 2 authored cases. Each follows the Signal Funnel:
+// Signal Funnel per leg:
 //   Leg 1 = Broad  (continent / major region)
 //   Leg 2 = Medium  (sub-region / country cluster)
-//   Leg 3 = Medium-Precise  (2-5 plausible cities)
-//   Leg 4 = Precise  (Aha moment achievable)
+//   Leg 3 = Medium-Precise  (2–5 plausible cities)
+//   Leg 4 = Precise  (Aha moment achievable before options appear)
+//
+// Each leg has 3 witnesses ordered broadest → most specific.
+// Witness 1 auto-reveals; Witnesses 2 and 3 are tap-to-reveal.
+// salience_score (1–10): shown as a subtle dot colour hint on city options.
+
+const SALIENCE_COLOR = (s) => {
+  if (s >= 8) return '#52c41a';   // well-known city — green dot
+  if (s >= 5) return '#F5C519';   // moderately known — gold dot
+  return '#ff4d4f';               // obscure — red dot
+};
 
 const CASES = [
   {
     id: 'case-001',
     number: 1,
     criminal: 'The Courier',
-    crime: 'A rare illuminated manuscript vanished from a Berlin auction house moments before the sale. Security footage shows a lone figure slipping out a rear exit with a flat package under one arm.',
-    startingCity: 'Berlin, Germany',
+    crime: 'A rare illuminated manuscript vanished from a Berlin auction house moments before the hammer fell. Security footage shows a lone figure slipping out a rear exit with a flat package under one arm. The seller is furious. The manuscript is priceless.',
+    startingCity: 'Berlin',
+    startingCountry: 'Germany',
+    startingFlag: '🇩🇪',
     legs: [
       {
-        // Broad → Istanbul (sits on the Bosphorus between Europe and Asia)
-        // Reasoning: narrow strait + two continents + two seas = Bosphorus = Istanbul
-        target: 'Istanbul',
-        clue: 'A ticket agent at Tegel remembered the suspect — they\'d asked for a window seat to watch the water. Their destination: a city famous for straddling the boundary of two continents, where a narrow waterway connects two separate bodies of water.',
-        recovery: 'Border records confirm the suspect flew toward a city where you can stand in Europe and look across a narrow channel directly into Asia — one of the world\'s only cities that spans two continents.',
-        options: ['Istanbul', 'Athens', 'Cairo', 'Beirut'],
+        // Target: Tokyo — East Asian island capital, bullet trains, cherry blossoms, Tsukiji fish market, Imperial Palace
+        target: 'Tokyo',
+        witnesses: [
+          {
+            archetype: 'Airport Staff',
+            clue_text: "She checked in for an eastbound long-haul. When I asked about her destination she just said 'end of the line.' Booked all the way through — one of those flights where you lose a whole day to the time difference.",
+            signals: ['East-Asia', 'island-nation', 'largest-metro'],
+            wrong_city_response: "I process thousands of passengers a day. That passport has not crossed this desk."
+          },
+          {
+            archetype: 'Taxi Driver',
+            clue_text: "She took my cab from the station — had just come off the bullet train. Mentioned she'd timed it to avoid the rush hour. Said the city ran like a clock. She liked that. 'Everything on time, all the time,' she said. Paid in local cash — had it ready.",
+            signals: ['bullet-trains', 'cherry-blossoms', 'island-capital'],
+            wrong_city_response: "I drive every road in this city. No one matching that description has sat in my back seat."
+          },
+          {
+            archetype: 'Hotel Concierge',
+            clue_text: "She asked which neighbourhood the old fish market used to be in — said she'd heard they moved it somewhere less atmospheric. Very specific question. Also asked about the palace — the one you can see from the gardens in the centre of the city but can never enter. I told her visiting hours. She didn't seem interested in visiting.",
+            signals: ['fish-market', 'imperial-palace', 'Japan'],
+            wrong_city_response: "I review every guest personally. That name has never graced our register."
+          }
+        ],
+        options: [
+          { city: 'Tokyo', salience_score: 10 },
+          { city: 'Seoul', salience_score: 9 },
+          { city: 'Beijing', salience_score: 9 },
+          { city: 'Shanghai', salience_score: 9 }
+        ],
         correct: 0
       },
       {
-        // Medium → Tbilisi (Georgia — Caucasus, between Black Sea & Caspian, ancient wine region)
-        // Reasoning: Caucasus + between two seas + ancient wine-making + carved stone churches = Georgia = Tbilisi
-        target: 'Tbilisi',
-        clue: 'Customs records place the suspect heading east into a compact, hilly country tucked between the Black Sea and the Caspian Sea — one of the oldest wine-producing regions on earth, where medieval stone churches are carved into cliffsides above river valleys.',
-        recovery: 'The suspect crossed into a small Caucasus nation — among the earliest countries to adopt Christianity — where vineyards have been cultivated for over 8,000 years and the capital sits in a deep gorge carved by a river.',
-        options: ['Tbilisi', 'Yerevan', 'Baku', 'Ankara'],
+        // Target: Sydney — southern hemisphere, harbour, Opera House, Harbour Bridge, 2000 Olympics
+        target: 'Sydney',
+        witnesses: [
+          {
+            archetype: 'Market Vendor',
+            clue_text: "Bought fruit — tropical stuff, mangoes, she knew exactly what she wanted. Said she needed to get to the waterfront before the afternoon turned. Southern accent, not local — somewhere further south, she said. 'The bottom of the world, practically.'",
+            signals: ['southern-hemisphere', 'Oceania', 'English-speaking'],
+            wrong_city_response: "Wrong market. Wrong city. Wrong hemisphere, frankly."
+          },
+          {
+            archetype: 'Bartender',
+            clue_text: "She had a beer and watched the harbour. Didn't talk much. When I asked if she was local she laughed — 'Nobody who sits and stares at that roof is local.' She meant the opera house. You can see it from here on a clear night. Tourists always stare.",
+            signals: ['harbour', 'opera-house', 'Australia'],
+            wrong_city_response: "I've served everyone who matters in this city. Haven't served them yet."
+          },
+          {
+            archetype: 'Museum Guard',
+            clue_text: "She came through the Olympic exhibition twice. Asked my colleague about the 2000 Games — specifically about the opening ceremony, which she called 'the one with the harbour in the background.' Took a photo of the aerial view display. The one showing the bridge and the opera house from above.",
+            signals: ['opera-house', 'harbour-bridge', 'Olympics-2000'],
+            wrong_city_response: "No unauthorised individuals. No matching descriptions. No entry. Good day."
+          }
+        ],
+        options: [
+          { city: 'Sydney', salience_score: 9 },
+          { city: 'Melbourne', salience_score: 8 },
+          { city: 'Auckland', salience_score: 7 },
+          { city: 'Brisbane', salience_score: 7 }
+        ],
         correct: 0
       },
       {
-        // Medium-Precise → Almaty (Kazakhstan, former capital, mountain base, not current capital)
-        // Reasoning: Central Asia + mountain base + former economic capital before new planned capital = Almaty
-        target: 'Almaty',
-        clue: 'Eyewitnesses place the suspect in Central Asia — at the base of a dramatic snow-capped mountain range, in a former capital city that lost its government functions to a new planned city built on the open steppe, but retained its role as the country\'s commercial engine.',
-        recovery: 'The trail leads to the largest city in a Central Asian nation — no longer the seat of government, which moved to a new city on the plains — but still the economic and cultural heart, nestled against mountain foothills in the southeast.',
-        options: ['Almaty', 'Tashkent', 'Bishkek', 'Astana'],
+        // Target: Cairo — North Africa, Nile, most populous in Africa, Pyramids
+        target: 'Cairo',
+        witnesses: [
+          {
+            archetype: 'Café Owner',
+            clue_text: "She sat for an hour, ordered mint tea, and watched the river. Not many people watch the river like that — like they know what it means. Asked me how far it was to the delta. I told her. She said 'further than I thought.' She had Arabic on her phone keyboard. Not a tourist.",
+            signals: ['North-Africa', 'Arab-world', 'Nile'],
+            wrong_city_response: "I know every face that walks through my door. That face has never walked through my door."
+          },
+          {
+            archetype: 'Hotel Concierge',
+            clue_text: "She'd booked through an agency — the name on the booking was different but the face matched. She asked about the traffic on the main bridge — said she needed to cross to the other side of the city and didn't want to get stuck. I told her the Nile crossing is always slow at that hour. She nodded like she already knew.",
+            signals: ['most-populous-Africa', 'Nile-delta', 'capital'],
+            wrong_city_response: "I review every guest personally. That name has never graced our register."
+          },
+          {
+            archetype: 'Taxi Driver',
+            clue_text: "I picked her up near the plateau — she'd been out there in the morning. Strange timing, it's very hot. She asked me if the old market was still near the pyramids. I said no, it moved years ago. She said 'Things always move. The pyramids don't.' Then she was quiet the whole drive back.",
+            signals: ['Pyramids', 'Seven-Wonders', 'Egypt'],
+            wrong_city_response: "I drive every road in this city. No one matching that description has sat in my back seat."
+          }
+        ],
+        options: [
+          { city: 'Cairo', salience_score: 9 },
+          { city: 'Casablanca', salience_score: 8 },
+          { city: 'Nairobi', salience_score: 8 },
+          { city: 'Algiers', salience_score: 7 }
+        ],
         correct: 0
       },
       {
-        // Precise → Samarkand (Silk Road, Registan plaza — three grand tilework buildings facing each other)
-        // Reasoning: Silk Road + monumental plaza of three tile-covered buildings = Registan = Samarkand
-        // Aha moment: "three grand tile-covered buildings facing each other" = Registan (described, not named)
-        target: 'Samarkand',
-        clue: 'The manuscript trail ends at an ancient Silk Road city — famous above all for its monumental central plaza where three grand mosques and academies, each covered in brilliant geometric tilework, face each other across a vast courtyard. A UNESCO site. Surrounded by desert and steppe.',
-        recovery: 'Final destination: a Silk Road city celebrated worldwide for its central square of three towering buildings whose facades are covered in intricate blue-and-turquoise tilework — the architectural crown of a medieval Central Asian empire.',
-        options: ['Samarkand', 'Bukhara', 'Dushanbe', 'Kabul'],
+        // Target: Rio de Janeiro — South America, Portuguese, carnival, mountains, Copacabana, Christ the Redeemer
+        target: 'Rio de Janeiro',
+        witnesses: [
+          {
+            archetype: 'Airport Staff',
+            clue_text: "She was on a flight to South America — I remember because she asked for a window seat on the left side going south. Said she wanted to see the coastline coming in. Portuguese on her boarding pass — she'd filled the customs form herself in the language. Native speaker or very close.",
+            signals: ['South-America', 'Portuguese-speaking', 'carnival'],
+            wrong_city_response: "I process thousands of passengers a day. That passport has not crossed this desk."
+          },
+          {
+            archetype: 'Market Vendor',
+            clue_text: "She came through the market near the beach — Ipanema side, not the tourist strip. Bought sunscreen, which was odd because she wasn't dressed for the beach. Said she was going up — pointed at the mountains behind the city. You can see the figure from everywhere down here. Everybody looks up eventually.",
+            signals: ['mountains', 'harbour', 'beachfront'],
+            wrong_city_response: "Wrong market. Wrong city. Wrong hemisphere, frankly."
+          },
+          {
+            archetype: 'Bartender',
+            clue_text: "She had a caipirinha and sat with her back to the view. That's how you know someone's been here before — the tourists always face the harbour and the mountain. She already knew what was up there. She just said: 'He's got his arms out like he's welcoming me.' I knew exactly what she meant.",
+            signals: ['Christ-the-Redeemer', 'Copacabana', 'Brazil'],
+            wrong_city_response: "I've served everyone who matters in this city. Haven't served them yet."
+          }
+        ],
+        options: [
+          { city: 'Rio de Janeiro', salience_score: 9 },
+          { city: 'Buenos Aires', salience_score: 9 },
+          { city: 'São Paulo', salience_score: 8 },
+          { city: 'Lima', salience_score: 7 }
+        ],
         correct: 0
       }
     ]
@@ -271,44 +582,132 @@ const CASES = [
     id: 'case-002',
     number: 2,
     criminal: 'The Architect',
-    crime: 'Classified infrastructure blueprints were lifted from a Paris government archive. Intelligence suggests they\'re in transit to a buyer — moving fast, hopping continents.',
-    startingCity: 'Paris, France',
+    crime: 'Classified infrastructure blueprints were lifted from a Paris government archive. Two guards on duty. Neither heard a thing. Intelligence puts the documents in transit to an unknown buyer — moving fast, hopping continents. The blueprints cannot leave the region.',
+    startingCity: 'Paris',
+    startingCountry: 'France',
     legs: [
       {
-        // Broad → Dubai (Gulf desert, rapid growth from fishing port to skyscraper city)
-        // Reasoning: Gulf desert + near-zero rainfall + transformed from fishing port in 50 years = Dubai
+        // Target: New York — Atlantic coast, island, five boroughs, Statue of Liberty
+        target: 'New York',
+        witnesses: [
+          {
+            archetype: 'Taxi Driver',
+            clue_text: "She wanted JFK, fast. Said she had a transatlantic connection going west. Very west — she said 'the one that takes eight hours and you still land the same day you left.' I've heard that before from people heading to the States. She had dollars in her wallet, ready.",
+            signals: ['North-America', 'Atlantic-coast', 'financial-capital'],
+            wrong_city_response: "I drive every road in this city. No one matching that description has sat in my back seat."
+          },
+          {
+            archetype: 'Café Owner',
+            clue_text: "She stopped in for a coffee before her flight. I noticed the boarding pass on the table — island city, she'd written on a napkin. When I asked she said 'an island surrounded by boroughs.' Said it like a puzzle. She was smiling. I didn't ask more.",
+            signals: ['island', 'river-mouth', 'five-boroughs'],
+            wrong_city_response: "I know every face that walks through my door. That face has never walked through my door."
+          },
+          {
+            archetype: 'Museum Guard',
+            clue_text: "She came through the American wing quickly — she'd been here before, you could tell. Stopped only once, in front of the French Impressionist section. Said something about the gift — 'France gave them the best gift and they put it in the harbour.' She meant the statue. Then she walked straight to the exit.",
+            signals: ['Statue-of-Liberty', 'France-gift', 'harbour'],
+            wrong_city_response: "No unauthorised individuals. No matching descriptions. No entry. Good day."
+          }
+        ],
+        options: [
+          { city: 'New York', salience_score: 10 },
+          { city: 'Chicago', salience_score: 9 },
+          { city: 'Los Angeles', salience_score: 9 },
+          { city: 'Boston', salience_score: 8 }
+        ],
+        correct: 0
+      },
+      {
+        // Target: Dubai — Gulf desert, rapid growth from fishing village, Burj Khalifa, busiest international airport
         target: 'Dubai',
-        clue: 'Surveillance at CDG shows the suspect boarding a Gulf-bound flight. Destination: a desert city with virtually no annual rainfall that transformed from a small fishing port into a skyline of record-breaking towers in under five decades — now a global hub for trade and transit between continents.',
-        recovery: 'The suspect flew to a city in the Arabian Peninsula desert — one of the fastest-growing urban centers in modern history — now a major hub for international finance, aviation, and luxury travel.',
-        options: ['Dubai', 'Cairo', 'Riyadh', 'Istanbul'],
+        witnesses: [
+          {
+            archetype: 'Hotel Concierge',
+            clue_text: "She asked about the heat before she'd even put her bag down. Not complaining — assessing. Said she needed to know whether to expect it to drop in the evening. I told her it wouldn't drop much. She said 'I grew up in the desert. This is different.' Meant the scale of it, I think. The buildings. Not a natural desert anymore.",
+            signals: ['Gulf-desert', 'Arabian-Peninsula', 'arid'],
+            wrong_city_response: "I review every guest personally. That name has never graced our register."
+          },
+          {
+            archetype: 'Airport Staff',
+            clue_text: "She was on an early departure, connecting onward. Mentioned she'd heard this airport was the busiest in the world for international passengers — asked me if that was still true. I confirmed it. She said 'Forty years ago this was a fishing village.' Correct. She'd done her research.",
+            signals: ['fishing-village-origin', 'rapid-growth', 'busiest-airport'],
+            wrong_city_response: "I process thousands of passengers a day. That passport has not crossed this desk."
+          },
+          {
+            archetype: 'Bartender',
+            clue_text: "She ordered water and looked at the skyline. Everyone does — you can see the tower from the bar terrace, it's unavoidable. She said 'I need to know which floor the meeting is on.' I said I wasn't sure which building she meant. She said 'The tall one.' I said they're all tall. She said: 'The tallest one in the world.' There's only one answer to that.",
+            signals: ['Burj-Khalifa', 'tallest-building', 'UAE'],
+            wrong_city_response: "I've served everyone who matters in this city. Haven't served them yet."
+          }
+        ],
+        options: [
+          { city: 'Dubai', salience_score: 9 },
+          { city: 'Abu Dhabi', salience_score: 8 },
+          { city: 'Doha', salience_score: 8 },
+          { city: 'Riyadh', salience_score: 8 }
+        ],
         correct: 0
       },
       {
-        // Medium → Mumbai (western coast of Indian subcontinent, largest film industry by volume, peninsula)
-        // Reasoning: western coast + subcontinent + world's most prolific film industry + peninsula into Arabian Sea = Mumbai
-        target: 'Mumbai',
-        clue: 'Dubai exit records show the suspect flew east to a dense coastal megacity on the western side of a large subcontinent — a city built on a peninsula jutting into the Arabian Sea, home to the world\'s most prolific film industry by output volume.',
-        recovery: 'The trail leads to South Asia\'s financial and entertainment capital — a crowded port city on the subcontinent\'s western coast, where a film industry producing thousands of titles per year dominates the culture.',
-        options: ['Mumbai', 'Karachi', 'Chennai', 'Colombo'],
+        // Target: Bangkok — Southeast Asia, Chao Phraya, never colonised, Grand Palace, Emerald Buddha, longest place name
+        target: 'Bangkok',
+        witnesses: [
+          {
+            archetype: 'Market Vendor',
+            clue_text: "She knew exactly how to move through the market — with the flow, not against it. Bought a mango sticky rice from the stall across from me and ate it walking, which is correct. Very tropical, very confident in the heat. Asked me in Thai if I had change. Decent Thai. Not local but practiced.",
+            signals: ['Southeast-Asia', 'river-delta', 'tropical'],
+            wrong_city_response: "Wrong market. Wrong city. Wrong hemisphere, frankly."
+          },
+          {
+            archetype: 'Taxi Driver',
+            clue_text: "She asked me to avoid the main roads — said she knew the backway to the temple complex. I asked which one. She said the golden one, the big one, the one from the postcards. Then she said 'the one the king built.' There are many, I told her. She said 'the original.' I took her to the Grand Palace.",
+            signals: ['never-colonised', 'Thailand', 'golden-temples'],
+            wrong_city_response: "I drive every road in this city. No one matching that description has sat in my back seat."
+          },
+          {
+            archetype: 'Café Owner',
+            clue_text: "She came in before the crowds and asked about the Emerald Buddha — specifically whether it was true the king changes its costume three times a year. I said yes. She knew this already, I think. She was testing me. Then she asked about the city's full name — the long one — and when I started reciting it she finished the last part herself. Nobody does that. Very strange woman.",
+            signals: ['Grand-Palace', 'Emerald-Buddha', 'longest-place-name'],
+            wrong_city_response: "I know every face that walks through my door. That face has never walked through my door."
+          }
+        ],
+        options: [
+          { city: 'Bangkok', salience_score: 9 },
+          { city: 'Jakarta', salience_score: 8 },
+          { city: 'Ho Chi Minh City', salience_score: 8 },
+          { city: 'Kuala Lumpur', salience_score: 8 }
+        ],
         correct: 0
       },
       {
-        // Medium-Precise → Singapore (island city-state, southern tip of peninsula, strict laws, busiest port)
-        // Reasoning: tiny island city-state + southern tip of peninsula + world's busiest port + strict civic laws = Singapore
-        target: 'Singapore',
-        clue: 'From Mumbai, the suspect flew southeast to a tiny island city-state positioned at the southern tip of a long peninsula — one of the world\'s busiest port complexes, and a society known for exceptionally strict public conduct laws.',
-        recovery: 'The trail continues to a small, wealthy island nation at the crossroads of Southeast Asian sea routes — famous globally for its cleanliness, strict laws, and status as a financial and logistics hub.',
-        options: ['Singapore', 'Kuala Lumpur', 'Jakarta', 'Bangkok'],
-        correct: 0
-      },
-      {
-        // Precise → Hong Kong (harbor city, mountains, distinct legal system within larger country, former colony)
-        // Reasoning: harbor city + mountains + distinct legal/political arrangement within larger country + South China Sea = Hong Kong
-        // Aha moment: "distinct legal system despite belonging to a larger country" + "harbor between mountains" = can only be HK
-        target: 'Hong Kong',
-        clue: 'Final destination: a dense harbor city on the South China Sea, pressed between steep mountain terrain and a famous deep-water port — operating under its own distinct legal and political system, even though it officially belongs to a much larger neighboring country.',
-        recovery: 'The blueprints are in a small but intensely built harbor city — a former colonial port — that now operates under a unique arrangement giving it substantial legal autonomy from the nation that surrounds it.',
-        options: ['Hong Kong', 'Macau', 'Shanghai', 'Taipei'],
+        // Target: Istanbul — straddles two continents, Hagia Sophia and Blue Mosque, Bosphorus
+        target: 'Istanbul',
+        witnesses: [
+          {
+            archetype: 'Museum Guard',
+            clue_text: "She moved through the empires wing without a guide — knew exactly what she was looking at. Stopped at the Byzantium section and the Ottoman section. Spent equal time. Said to my colleague: 'Two of the greatest empires in history and they both picked the same city.' She wasn't wrong.",
+            signals: ['ancient-empires', 'crossroads', 'major-port'],
+            wrong_city_response: "No unauthorised individuals. No matching descriptions. No entry. Good day."
+          },
+          {
+            archetype: 'Hotel Concierge',
+            clue_text: "She requested a room with a Bosphorus view — very specific about that. Said she wanted to see both sides from the window. When I said 'both sides of what' she smiled and said 'both continents.' I've had that request before. We get it from guests who know what it means to stand in one world and look at another.",
+            signals: ['two-continents', 'Bosphorus', 'Europe-Asia'],
+            wrong_city_response: "I review every guest personally. That name has never graced our register."
+          },
+          {
+            archetype: 'Airport Staff',
+            clue_text: "She had a connection — said she needed two hours minimum because she wanted to look at the old building before she left. I asked which one. She said 'the one that can't decide if it's a church or a mosque.' I knew immediately. There's only one place where you can see that building and the Blue Mosque in the same photograph. She wanted that view from the departure lounge.",
+            signals: ['Hagia-Sophia', 'Blue-Mosque', 'Byzantine-Ottoman'],
+            wrong_city_response: "I process thousands of passengers a day. That passport has not crossed this desk."
+          }
+        ],
+        options: [
+          { city: 'Istanbul', salience_score: 9 },
+          { city: 'Athens', salience_score: 8 },
+          { city: 'Cairo', salience_score: 9 },
+          { city: 'Rome', salience_score: 9 }
+        ],
         correct: 0
       }
     ]
@@ -318,61 +717,128 @@ const CASES = [
 // ─── STATE ────────────────────────────────────────────────────────────────────
 
 let S = {
-  screen:   'brief',   // 'brief' | 'game' | 'result'
-  caseIdx:  0,
-  legIdx:   0,
-  chosen:   null,      // option index | null
-  missedPrev: false,   // serve recovery clue on current leg?
-  path:     [],        // array of booleans (true = correct)
+  screen:             'brief',  // 'brief' | 'game' | 'result'
+  caseIdx:            0,
+  legIdx:             0,
+  witnessesRevealed:  1,        // 1–3; Witness 1 auto-reveals at leg start
+  wrongGuessesThisLeg: [],      // array of option indices guessed wrong this leg
+  lastWrongResponse:  null,     // { city, response } | null — for displaying wrong feedback
+  lastCorrect:        false,    // was last guess correct?
+  // Per-leg tracking for scoring
+  legWitnessesRevealed: [],     // e.g. [1, 2, 1, 3] — witnesses revealed per leg
+  legWrongGuesses:      [],     // e.g. [0, 1, 0, 2] — wrong guesses per leg
 };
 
 function C()   { return CASES[S.caseIdx]; }
 function leg() { return C().legs[S.legIdx]; }
 
+// ─── SCORING ──────────────────────────────────────────────────────────────────
+// Path Efficiency % = max(0, 100 - (totalWrongGuesses × 15) - (totalExtraWitnessesRevealed × 5))
+// totalExtraWitnessesRevealed = sum of (witnessesRevealed - 1) across all legs
+
+function calcScore() {
+  const totalWrong = S.legWrongGuesses.reduce((a, b) => a + b, 0);
+  const totalExtraWitnesses = S.legWitnessesRevealed.reduce((a, b) => a + (b - 1), 0);
+  return Math.max(0, 100 - (totalWrong * 15) - (totalExtraWitnesses * 5));
+}
+
+function scoreEmoji(score) {
+  if (score === 100) return '🟩🟩🟩🟩';
+  if (score >= 80)  return '🟩🟩🟩🟨';
+  if (score >= 60)  return '🟩🟩🟨🟨';
+  if (score >= 40)  return '🟩🟨🟨🟨';
+  if (score >= 20)  return '🟨🟨🟨🟥';
+  return '🟥🟥🟥🟥';
+}
+
 // ─── ACTIONS ──────────────────────────────────────────────────────────────────
 
 function startCase() {
-  S.screen = 'game'; S.legIdx = 0; S.chosen = null;
-  S.missedPrev = false; S.path = [];
+  S.screen = 'game';
+  S.legIdx = 0;
+  S.witnessesRevealed = 1;
+  S.wrongGuessesThisLeg = [];
+  S.lastWrongResponse = null;
+  S.lastCorrect = false;
+  S.legWitnessesRevealed = [];
+  S.legWrongGuesses = [];
   render();
 }
 
-function chooseCity(i) {
-  if (S.chosen !== null) return;
-  S.chosen = i;
-  S.path.push(i === leg().correct);
-  render();
+function revealWitness() {
+  if (S.witnessesRevealed < 3) {
+    S.witnessesRevealed++;
+    S.lastWrongResponse = null;
+    render();
+  }
+}
+
+function chooseCity(optionIdx) {
+  const l = leg();
+  // Already eliminated this one
+  if (S.wrongGuessesThisLeg.includes(optionIdx)) return;
+  // Already correct
+  if (S.lastCorrect) return;
+
+  if (optionIdx === l.correct) {
+    // Correct guess
+    S.lastCorrect = true;
+    S.lastWrongResponse = null;
+    // Record per-leg stats
+    S.legWitnessesRevealed.push(S.witnessesRevealed);
+    S.legWrongGuesses.push(S.wrongGuessesThisLeg.length);
+    render();
+  } else {
+    // Wrong guess — record, show response, grey out city
+    S.wrongGuessesThisLeg.push(optionIdx);
+    const witness = l.witnesses[S.witnessesRevealed - 1];
+    S.lastWrongResponse = {
+      city: l.options[optionIdx].city,
+      response: witness.wrong_city_response
+    };
+    render();
+  }
 }
 
 function advance() {
-  const wasCorrect = S.path[S.path.length - 1];
-  if (S.legIdx >= 3) { S.screen = 'result'; render(); return; }
-  S.missedPrev = !wasCorrect;
+  if (S.legIdx >= 3) {
+    S.screen = 'result';
+    render();
+    return;
+  }
   S.legIdx++;
-  S.chosen = null;
+  S.witnessesRevealed = 1;
+  S.wrongGuessesThisLeg = [];
+  S.lastWrongResponse = null;
+  S.lastCorrect = false;
   render();
 }
 
 function nextCase() {
   S.caseIdx = (S.caseIdx + 1) % CASES.length;
-  S.screen = 'brief'; S.legIdx = 0; S.chosen = null;
-  S.missedPrev = false; S.path = [];
+  S.screen = 'brief';
+  S.legIdx = 0;
+  S.witnessesRevealed = 1;
+  S.wrongGuessesThisLeg = [];
+  S.lastWrongResponse = null;
+  S.lastCorrect = false;
+  S.legWitnessesRevealed = [];
+  S.legWrongGuesses = [];
   render();
 }
 
 function copyShare() {
-  navigator.clipboard.writeText(shareText()).then(() => {
+  navigator.clipboard.writeText(buildShareText()).then(() => {
     const btn = document.getElementById('copybtn');
-    if (btn) { btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy to share', 2000); }
+    if (btn) { btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = 'Copy to share'; }, 2000); }
   });
 }
 
-function shareText() {
+function buildShareText() {
   const c = C();
-  const won = S.path[3];
-  const eff = Math.round(S.path.filter(Boolean).length / 4 * 100);
-  const grid = S.path.map(b => b ? '🟩' : '🟥').join('');
-  return `🌍 Global Pursuit #${c.number}\n${grid}\n${won ? 'Caught in 4 moves' : 'Suspect escaped'}\nEfficiency: ${eff}%\n#GlobalPursuit`;
+  const score = calcScore();
+  const grid = scoreEmoji(score);
+  return `🌍 Global Pursuit #${c.number}\n${grid}\nPath Efficiency: ${score}%\n#GlobalPursuit`;
 }
 
 // ─── RENDER ───────────────────────────────────────────────────────────────────
@@ -390,97 +856,173 @@ function renderBrief() {
   return `<div class="card">
     <div class="game-label">Global Pursuit</div>
     <div class="case-title">Case #${c.number}: ${c.criminal}</div>
-    <div class="meta">
-      <div class="meta-row"><span class="meta-key">Crime</span><span class="meta-val">${c.crime}</span></div>
-      <div class="meta-row"><span class="meta-key">Last seen</span><span class="meta-val">${c.startingCity}</span></div>
-      <div class="meta-row"><span class="meta-key">Moves</span><span class="meta-val">4 maximum — no retries</span></div>
+    <div class="director-thread">
+      <div class="director-header">
+        <div class="director-avatar">V</div>
+        <div class="director-name-block">
+          <div class="director-name">Director Vance</div>
+          <div class="director-status">● Secure channel</div>
+        </div>
+      </div>
+      <div class="bubble">${c.crime}</div>
+      <div class="bubble">This criminal has outsmarted every agent we have. Until now.</div>
+      <div class="bubble">Last seen: <strong>${c.startingCity}, ${c.startingCountry}</strong></div>
+      <div class="bubble">The trail starts there. Don't lose it.</div>
     </div>
-    <hr>
-    <div class="section-label">First Signal</div>
-    <div class="clue-box"><div class="clue-text">${c.legs[0].clue}</div></div>
-    <button class="btn btn-gold" onclick="startCase()">Begin the Chase →</button>
+    <button class="btn btn-gold" onclick="startCase()">Accept case →</button>
   </div>`;
 }
 
 function renderGame() {
   const c = C();
   const l = leg();
-  const clue = (S.missedPrev && S.legIdx > 0) ? l.recovery : l.clue;
-  const chosen = S.chosen;
-  const isCorrect = chosen !== null ? chosen === l.correct : null;
   const legNum = S.legIdx + 1;
+  const isCapture = S.legIdx === 3;
 
   // Progress dots
   const dots = Array.from({length: 4}, (_, i) => {
     let cls = 'pdot';
-    if (i < S.path.length) cls += S.path[i] ? ' won' : ' lost';
+    if (i < S.legWitnessesRevealed.length) cls += ' won';
     else if (i === S.legIdx) cls += ' active';
     return `<div class="${cls}"></div>`;
   }).join('');
 
+  // Witness cards
+  let witnessCards = '';
+  for (let wi = 0; wi < 3; wi++) {
+    const w = l.witnesses[wi];
+    const isRevealed = (wi + 1) <= S.witnessesRevealed;
+    const isNextToReveal = !S.lastCorrect && (wi + 1) === S.witnessesRevealed + 1 && S.witnessesRevealed < 3;
+
+    if (isRevealed) {
+      witnessCards += `
+        <div class="witness-card revealed">
+          <div class="witness-label-row">
+            <div class="witness-label">Witness ${wi + 1} · ${w.archetype}</div>
+          </div>
+          <div class="witness-clue">${w.clue_text}</div>
+        </div>`;
+    } else if (isNextToReveal) {
+      witnessCards += `
+        <div class="witness-card locked">
+          <div class="witness-label-row">
+            <div class="witness-label">Witness ${wi + 1}</div>
+            <div class="lock-icon">🔒</div>
+          </div>
+          <button class="reveal-btn" onclick="revealWitness()">Tap to reveal another witness</button>
+        </div>`;
+    } else {
+      witnessCards += `
+        <div class="witness-card locked">
+          <div class="witness-label-row">
+            <div class="witness-label">Witness ${wi + 1}</div>
+            <div class="lock-icon">🔒</div>
+          </div>
+        </div>`;
+    }
+  }
+
   // City buttons
-  const buttons = l.options.map((city, i) => {
+  const cityButtons = l.options.map((opt, i) => {
+    const isEliminated = S.wrongGuessesThisLeg.includes(i);
+    const isCorrectChoice = S.lastCorrect && i === l.correct;
+
     let cls = 'city-btn';
     let mark = '';
-    if (chosen !== null) {
-      if (i === l.correct) {
-        cls += chosen === l.correct ? ' s-correct' : ' s-reveal';
-        mark = '✓';
-      } else if (i === chosen) {
-        cls += ' s-wrong';
-        mark = '✗';
-      }
+    if (isCorrectChoice) {
+      cls += ' s-correct';
+      mark = '✓';
+    } else if (isEliminated) {
+      cls += ' s-eliminated';
+      mark = '✗';
     }
-    return `<button class="${cls}" onclick="chooseCity(${i})" ${chosen !== null ? 'disabled' : ''}>
-      ${city}<span class="mark">${mark}</span>
+
+    const dotColor = SALIENCE_COLOR(opt.salience_score);
+    const dotHtml = `<span class="salience-dot" style="background:${dotColor}" title="Recognisability: ${opt.salience_score}/10"></span>`;
+
+    const disabled = (S.lastCorrect || isEliminated) ? 'disabled' : '';
+
+    return `<button class="${cls}" onclick="chooseCity(${i})" ${disabled}>
+      <span class="city-btn-inner">${dotHtml}${opt.city}</span>
+      <span class="mark">${mark}</span>
     </button>`;
   }).join('');
 
-  // Feedback
-  let feedback = '';
-  if (chosen !== null) {
-    feedback = isCorrect
-      ? `<div class="feedback-box ok">✓ On the trail.${legNum < 4 ? ' The signal narrows.' : ' Closing in.'}</div>`
-      : `<div class="feedback-box nope">No one here has seen the suspect. A move wasted — but the trail isn't cold yet.</div>`;
+  // Wrong city feedback
+  let wrongFeedback = '';
+  if (S.lastWrongResponse) {
+    wrongFeedback = `
+      <div class="feedback-box wrong">
+        <div class="feedback-wrong-label">NO MATCH · ${S.lastWrongResponse.city}</div>
+        <div class="feedback-wrong-text">${S.lastWrongResponse.response}</div>
+      </div>`;
   }
 
-  // Continue button
-  const continueBtn = chosen !== null
-    ? `<button class="btn btn-gold" onclick="advance()">${S.legIdx >= 3 ? 'See Results' : 'Continue →'}</button>`
-    : '';
+  // Correct city feedback
+  let correctFeedback = '';
+  let continueBtn = '';
+  if (S.lastCorrect) {
+    const confirmCity = l.options[l.correct].city;
+    const directorLine = isCapture
+      ? "Outstanding. They had a twelve-hour head start. Case closed."
+      : "Good call, Agent. Keep moving.";
+    correctFeedback = `
+      <div class="director-confirm">
+        <div class="director-confirm-avatar">V</div>
+        <div class="director-confirm-bubble">
+          <div class="confirm-city-label">Trail confirmed. ${confirmCity} ✓</div>
+          ${directorLine}
+        </div>
+      </div>`;
+    continueBtn = `<button class="btn btn-gold" onclick="advance()">${isCapture ? 'See Results' : 'Continue →'}</button>`;
+  }
 
   return `<div class="card">
     <div class="game-label">Global Pursuit · Case #${c.number}</div>
     <div class="progress-row">
       <div class="progress-dots">${dots}</div>
-      <div class="leg-counter">Move ${legNum} of 4</div>
+      <div class="leg-counter">Leg ${legNum} of 4</div>
     </div>
     <hr style="margin:12px 0 16px;">
-    <div class="section-label">Signal</div>
-    <div class="clue-box"><div class="clue-text">${clue}</div></div>
-    <div class="section-label">Where is ${c.criminal} headed?</div>
-    <div class="city-list">${buttons}</div>
-    ${feedback}
+    <div class="section-label">Witnesses</div>
+    <div class="witnesses-stack">${witnessCards}</div>
+    <div class="city-grid-label">Where did they go?</div>
+    <div class="city-list">${cityButtons}</div>
+    ${wrongFeedback}
+    ${correctFeedback}
     ${continueBtn}
   </div>`;
 }
 
 function renderResult() {
   const c = C();
-  const won = S.path[3];
-  const eff = Math.round(S.path.filter(Boolean).length / 4 * 100);
-  const grid = S.path.map(b => b ? '🟩' : '🟥').join('');
-  const share = shareText();
+  const score = calcScore();
+  const grid = scoreEmoji(score);
+  const shareText = buildShareText();
+
+  const totalWrong = S.legWrongGuesses.reduce((a, b) => a + b, 0);
+  const totalExtraWit = S.legWitnessesRevealed.reduce((a, b) => a + (b - 1), 0);
+
+  let subtitleParts = [];
+  if (totalWrong > 0) subtitleParts.push(`${totalWrong} wrong guess${totalWrong !== 1 ? 'es' : ''}`);
+  if (totalExtraWit > 0) subtitleParts.push(`${totalExtraWit} extra witness${totalExtraWit !== 1 ? 'es' : ''} revealed`);
+  const subtitle = subtitleParts.length ? subtitleParts.join(' · ') : 'Perfect run';
 
   return `<div class="card">
     <div class="game-label">Global Pursuit · Case #${c.number}</div>
     <hr style="margin-top:8px;">
     <div style="margin-top:20px;">
       <div class="result-emoji">${grid}</div>
-      <div class="result-head ${won ? 'win' : 'fail'}">${won ? 'Suspect Caught' : 'Suspect Escaped'}</div>
-      <div class="result-sub">${c.criminal} &nbsp;·&nbsp; Path Efficiency: ${eff}%</div>
+      <div class="result-head win">Criminal Captured!</div>
+      <div class="result-efficiency">${score}%</div>
+      <div class="result-eff-label">Path Efficiency</div>
+      <div class="result-sub">${c.criminal} &nbsp;·&nbsp; ${subtitle}</div>
     </div>
-    <div class="share-preview">${share}</div>
+    <div class="director-capture">
+      <div class="director-capture-label">Director Vance</div>
+      <div class="director-capture-text">Outstanding. They had a twelve-hour head start. Case closed.</div>
+    </div>
+    <div class="share-preview">${shareText}</div>
     <div class="btn-row">
       <button class="btn btn-gold" id="copybtn" onclick="copyShare()">Copy to share</button>
       <button class="btn btn-dark" onclick="nextCase()">Next case →</button>

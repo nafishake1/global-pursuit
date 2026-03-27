@@ -31,7 +31,8 @@ User Accounts and Leaderboard are designed (Full Vision tier).
 
 | # | System Name | Category | Priority | Status | Design Doc | Depends On |
 |---|---|---|---|---|---|---|
-| 1 | Case Database | Core | MVP | Approved | design/gdd/case-database.md | — |
+| 0 | Difficulty System | Core | MVP | Draft | design/gdd/difficulty-system.md | Case Database (City.salience_score) |
+| 1 | Case Database | Core | MVP | Approved | design/gdd/case-database.md | Difficulty System |
 | 2 | Daily Seed System | Core | MVP | Not Started | — | Case Database |
 | 3 | Game State Manager | Core | MVP | Not Started | — | Daily Seed, Case Database |
 | 4 | Clue Engine | Gameplay | MVP | Designed | design/gdd/clue-engine.md | Case Database, Game State Manager |
@@ -191,11 +192,11 @@ a one-way dependency — Clue Engine does not read from City Selection. Clean.
 
 | Metric | Count |
 |---|---|
-| Total systems identified | 20 |
-| Design docs started | 2 |
+| Total systems identified | 21 |
+| Design docs started | 3 |
 | Design docs reviewed | 1 |
 | Design docs approved | 1 |
-| MVP systems designed | 2 / 13 |
+| MVP systems designed | 2 / 14 |
 | Vertical Slice systems designed | 0 / 4 |
 
 ---
