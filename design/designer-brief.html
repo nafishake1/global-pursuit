@@ -89,16 +89,16 @@
 
     .screens-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: stretch; }
     .screen {
-      width: 100%; min-height: 480px;
-      background: #111; border: 2px solid #3a3a3a;
+      width: 100%; height: 560px;
+      background: #111; border: 2px solid rgba(255,255,255,0.13);
       border-radius: 16px; overflow: hidden;
       display: flex; flex-direction: column;
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 8px 24px rgba(0,0,0,0.5);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 12px 32px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.05);
     }
     .screen-bar {
       padding: 10px 12px 8px; display: flex;
       align-items: center; justify-content: space-between;
-      border-bottom: 2px solid #3a3a3a; background: #1a1a1a;
+      border-bottom: 1px solid rgba(255,255,255,0.1); background: #1a1a1a;
     }
     .screen-name { font-size: 0.62rem; font-weight: 600; letter-spacing: 0.06em; color: #aaa; text-transform: uppercase; }
     .screen-badge { font-size: 0.6rem; font-weight: 700; color: var(--gold); }
@@ -634,10 +634,22 @@
         </div>
         <div class="wf-block">
           <div class="wf-label">Efficiency</div>
-          <div class="wf-text gold" style="font-size:1.1rem; font-weight:700;">87%</div>
+          <div style="display:flex; align-items:center; gap:6px; margin-top:2px;">
+            <div class="wf-text gold" style="font-size:1.1rem; font-weight:700; line-height:1;">87%</div>
+            <div style="flex:1; height:5px; background:var(--border); border-radius:3px; overflow:hidden;">
+              <div style="width:87%; height:100%; background:var(--gold); border-radius:3px;"></div>
+            </div>
+          </div>
         </div>
-        <div style="flex:1;"></div>
-        <div class="wf-btn">Share result →</div>
+        <!-- Share card preview -->
+        <div style="background:linear-gradient(135deg,#1c1a08 0%,#0d0d0a 100%); border:1px solid var(--gold-border); border-radius:8px; padding:8px 10px;">
+          <div style="font-size:0.5rem; color:var(--gold); font-weight:700; letter-spacing:0.12em; text-transform:uppercase; margin-bottom:5px;">Share Card</div>
+          <div style="font-size:0.72rem; font-weight:700; color:var(--white); margin-bottom:4px;">🕵️ Global Pursuit #42</div>
+          <div style="font-size:0.8rem; letter-spacing:0.06em; margin-bottom:5px; color:#fff;">✈️ ✈️ ✈️ ✈️ 🎯</div>
+          <div style="font-size:0.6rem; color:var(--gray); font-family:monospace; margin-bottom:3px;">Paris → Oslo → Mumbai → Lagos → Rio</div>
+          <div style="font-size:0.62rem; color:var(--gold); font-weight:600;">87% efficiency · Clean trail</div>
+        </div>
+        <div class="wf-btn" style="background:var(--gold); color:#000; font-size:0.75rem; font-weight:800; text-align:center; padding:9px; border-radius:8px; letter-spacing:0.02em;">Share result →</div>
       </div>
     </div>
 
@@ -867,6 +879,59 @@
         <tr><td>Commit assets</td><td>SVG files + updated tokens.json</td></tr>
         <tr><td>Open PR</td><td>Tag for review before merging to main</td></tr>
         <tr><td>Never</td><td>Commit directly to main</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<hr>
+
+<!-- TECH STACK -->
+<div class="section">
+  <span class="section-label">Tech Stack</span>
+  <h2>What we're building with</h2>
+  <p style="margin-bottom:24px; color:var(--gray);">Recommended by the Technical Director. Web-first, ship to app stores via Capacitor. No native code unless absolutely necessary.</p>
+  <div class="grid-3" style="margin-bottom:20px;">
+    <div class="card">
+      <div style="font-size:1.2rem; margin-bottom:8px;">⚛️</div>
+      <h3>React 19 + TypeScript</h3>
+      <p style="font-size:0.8rem; margin-top:4px;">Component model, type safety. Design tokens consumed as CSS custom properties. Figma Variables → tokens.json → CSS.</p>
+    </div>
+    <div class="card">
+      <div style="font-size:1.2rem; margin-bottom:8px;">🎞️</div>
+      <h3>Framer Motion</h3>
+      <p style="font-size:0.8rem; margin-top:4px;">All animations — flight arcs, pin reveals, capture sequence, wrong-guess bounce. Animation values come from design tokens. Designer owns the timing.</p>
+    </div>
+    <div class="card">
+      <div style="font-size:1.2rem; margin-bottom:8px;">📱</div>
+      <h3>Capacitor</h3>
+      <p style="font-size:0.8rem; margin-top:4px;">Wraps the web app as a native iOS + Android binary. Gives us haptics, share sheet, and app store distribution without rewriting anything.</p>
+    </div>
+    <div class="card">
+      <div style="font-size:1.2rem; margin-bottom:8px;">🌍</div>
+      <h3>Canvas 2D Globe</h3>
+      <p style="font-size:0.8rem; margin-top:4px;">Custom-built, no Three.js. Pure Canvas 2D for maximum performance on low-end phones. Drag-to-spin, tap-to-guess, edge indicators — all in ~200 lines.</p>
+    </div>
+    <div class="card">
+      <div style="font-size:1.2rem; margin-bottom:8px;">⚡</div>
+      <h3>Vite</h3>
+      <p style="font-size:0.8rem; margin-top:4px;">Dev server + build tool. Hot module replacement during development. Sub-second builds for fast iteration.</p>
+    </div>
+    <div class="card">
+      <div style="font-size:1.2rem; margin-bottom:8px;">🗂️</div>
+      <h3>Static JSON Cases</h3>
+      <p style="font-size:0.8rem; margin-top:4px;">One JSON file per calendar date. No backend for MVP. Hosted on Vercel or Netlify. Case authoring is a separate editorial workflow.</p>
+    </div>
+  </div>
+  <div class="card gold">
+    <h3 style="margin-bottom:10px;">Designer touchpoints in the stack</h3>
+    <table>
+      <thead><tr><th>You own</th><th>How it reaches code</th></tr></thead>
+      <tbody>
+        <tr><td>Colour, type, spacing, motion</td><td>Figma Variables → tokens.json → CSS custom properties</td></tr>
+        <tr><td>Signal icons + city SVGs</td><td>Exported SVG → /src/assets/ → imported by React components</td></tr>
+        <tr><td>Animation timing + easing</td><td>Framer Motion config values pulled from design tokens</td></tr>
+        <tr><td>Globe visual style</td><td>Canvas 2D draw calls — colours and sizes are token-driven</td></tr>
       </tbody>
     </table>
   </div>
@@ -1171,6 +1236,7 @@
 
     function animate() {
       requestAnimationFrame(animate);
+      if (W === 0 || H === 0) setSize();
       tick += 0.016;
       if (!dragging) {
         velX *= 0.92; velY *= 0.92;
