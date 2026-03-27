@@ -1,9 +1,9 @@
 # Case Database
 
-> **Status**: Approved
+> **Status**: Approved — schema updated 2026-03-25
 > **Reviewed**: 2026-03-24 — design review CONCERNS resolved; blockers cleared
 > **Author**: Product Director + Claude
-> **Last Updated**: 2026-03-25 — `signals` field added to Leg schema (follow-up from Clue Engine GDD approval)
+> **Last Updated**: 2026-03-26
 > **Implements Pillar**: Enables all pillars (foundational data layer)
 
 ## Overview
@@ -49,11 +49,14 @@ case authors and read by game systems. It does not change during a session.
 **Leg** (one per move, 4 per case)
 - `order` (integer, 1–4) — sequential position in the route
 - `target_city` (City) — the correct city for this move
-- `clue_text` (string) — the clue the player reads when deciding this move; must pass all 4 Clue Validity Principles
-- `recovery_clue_text` (string) — a more explicit version of `clue_text`, shown by the Clue Engine when the player made a wrong move on the *previous* leg; must pass the same 4 Clue Validity Principles; authored alongside `clue_text`
+- `witnesses` (WitnessClue[3]) — exactly 3 witness clues per leg, revealed one at a time by the player tapping; Witness 1 is broadest, Witness 3 is most specific; all 3 together must be sufficient to identify the target city
 - `wrong_options` (City[], length 2–4) — hand-curated decoys; combined with `target_city` yields 3–5 total options per move
-- `signals` (string[], optional) — list of signal tags for this leg, e.g. `["cold", "industrial", "coastal"]`; used by the Clue Engine and City Selection to render signal icons; drawn from the project's finite signal tag vocabulary; absence is valid (no icons rendered)
 - `reasoning_chain` (string, optional) — author note explaining inference path; never shown to player; used during validity review
+
+**WitnessClue** (3 per Leg, ordered broadest to most specific)
+- `clue_text` (string) — what this witness says about where the criminal fled; must pass all 4 Clue Validity Principles
+- `signals` (string[]) — machine-readable tags from the finite signal taxonomy (e.g. `["cold", "coastal", "industrial"]`); rendered as icons on the clue card UI; required, not optional
+- `reasoning_chain` (string, optional) — author note explaining inference; never shown to player; strongly recommended
 
 **City** (referenced by Case and Leg)
 - `id` (string) — system-only; not shown to player
@@ -62,19 +65,30 @@ case authors and read by game systems. It does not change during a session.
 - `region` (string) — system-only; used for authoring plausibility checks; not shown to player, e.g. `"Southeast Asia"`
 - `lat` (float) — system-only; used for globe positioning only
 - `lng` (float) — system-only; used for globe positioning only
+- `salience_score` (integer, 1–10) — global recognisability score derived from Wikidata sitelink count; used for difficulty scheduling and wrong-option selection; see Difficulty System GDD
+- `visuals` (object, optional) — visual assets for this city; all sub-fields optional; authored once per city, reused across all cases
+  - `flag` (string, optional) — SVG filename, e.g. `"jp.svg"`
+  - `landmark` (string, optional) — SVG filename of a described (not named) landmark illustration
+  - `artifact` (string, optional) — SVG filename of a cultural artifact
+  - `cultural_dress` (string, optional) — SVG filename of cultural dress
+  - `currency` (string, optional) — SVG filename of currency visual
+
+> **Note on City visuals**: City visuals appear on city pins on the globe, NOT on witness clue cards. This preserves Pillar 1 (Deduction Over Trivia) — players reason from clue text + signal icons, then evaluate city visuals when confirming their choice on the globe.
 
 **Authoring rules:**
 1. Every case must have exactly 4 legs. No variable-length routes in MVP.
 2. Every leg must have between 2 and 4 wrong options (total options per move = 3–5).
 3. `starting_city` is always revealed to the player at brief time — it is never a move.
-4. `clue_text` for each leg must pass all 4 Clue Validity Principles before the case is approved (see Acceptance Criteria).
-5. **Wrong option plausibility standard ("reasonable inference" test)**: At least one wrong option per leg must be a city that a thoughtful player could reasonably justify as correct from the available clue alone — before the full clue sequence has narrowed the field. A city passes the test if a reviewer can write a plausible (even if incorrect) inference chain from the clue to that city. A wrong option that no reasonable inference supports fails this test and must be replaced.
+4. `witnesses[].clue_text` for all 3 witnesses on each leg must pass all 4 Clue Validity Principles before the case is approved (see Acceptance Criteria).
+5. **Wrong option plausibility standard ("reasonable inference" test)**: At least one wrong option per leg must be a city that a thoughtful player could reasonably justify as correct from the available clue alone — before the full clue sequence has narrowed the field. A city passes the test if a reviewer can write a plausible (even if incorrect) inference chain from the clue to that city. A wrong option that no reasonable inference supports fails this test and must be replaced. This test must be applied after all 3 witnesses have been revealed — a wrong option that becomes trivially eliminable after Witness 3 fails the test even if it was plausible at Witness 1.
 6. Each case's `release_date` must be unique — only one case per calendar day.
 7. `reasoning_chain` is strongly recommended for every leg but not strictly required. Cases without it cannot be validated against the Reasoning Chain Test.
+8. **Witness specificity ladder**: Witness 1 must be Broad specificity, Witness 2 must be Medium, Witness 3 must be Medium-Precise or Precise. The three witnesses together must be sufficient to identify the target city through reasoning.
+9. Every `witnesses[].signals` array must contain at least 1 tag from the approved signal taxonomy.
 
 **Deferred to Vertical Slice (not in MVP schema):**
 - `CriminalAlias` as a full entity with profiles, known patterns, and case history
-- `difficulty` field
+- `difficulty` field on Case (derived from `route_salience` — see Difficulty System GDD)
 - `tags` for filtering and authoring tools
 
 ### States and Transitions
@@ -92,7 +106,7 @@ been released (release_date ≤ today) or is scheduled (release_date > today).
 | System | Direction | What flows |
 |---|---|---|
 | **Daily Seed System** | Reads from Case Database | Queries the case whose `release_date` matches today |
-| **Clue Engine** | Reads from Case Database | Reads `clue_text` and `wrong_options` for each leg of the active case |
+| **Clue Engine** | Reads from Case Database | Reads `witnesses[]` (all 3 WitnessClues) and `wrong_options` for each leg of the active case |
 | **City Selection** | Reads from Case Database | Reads `wrong_options` + `target_city` per leg to build the options list |
 | **Case Brief Display** | Reads from Case Database | Reads `crime_description`, `criminal_alias`, `starting_city` |
 | **Globe Visualization** | Reads from Case Database | Reads `lat`/`lng` and `display_name` for all cities in the active case |
@@ -121,6 +135,10 @@ total_options = len(wrong_options) + 1
 The authored `wrong_options` length determines difficulty feel per move:
 - 2 wrong options (3 total) — easier; less to evaluate
 - 4 wrong options (5 total) — harder; more elimination required
+
+### Score Floor
+
+Per-leg scores are floored at 0. Negative scores (from multiple wrong guesses combined with revealing all witnesses) display as 0 in the UI and contribute 0 to the session total. Maximum total score remains 400 (4 legs × 100).
 
 ### Minimum Case Pool Size
 
@@ -152,6 +170,7 @@ the case pipeline must stay ahead of the calendar by a buffer of at least 14 cas
 | Two cases share the same `release_date` | Serve the lower `case_number`; log a conflict warning | Deterministic resolution of authoring conflict; never player-facing |
 | Player has already played today's case on this device | Game State Manager detects completion in local storage and presents the stored result without querying the Case Database | Case Database is never queried in replay scenarios; Game State Manager owns replay detection |
 | `wrong_options` contains the `target_city` | Treat as invalid case; do not serve; log authoring error | A correct answer cannot appear as a decoy — authoring validation must catch this before publish |
+| A `witnesses` array has fewer than 3 entries | Treat as invalid case; do not serve; log authoring error | All legs must have exactly 3 witnesses — enforced at authoring/validation time |
 
 ## Dependencies
 
@@ -159,7 +178,7 @@ the case pipeline must stay ahead of the calendar by a buffer of at least 14 cas
 |---|---|---|
 | **Daily Seed System** | Depends on Case Database | Queries by `release_date` to find today's case |
 | **Game State Manager** | Depends on Case Database | Loads the full active case structure at session start |
-| **Clue Engine** | Depends on Case Database | Reads `clue_text` per leg as the source of all clue content |
+| **Clue Engine** | Depends on Case Database | Reads `witnesses[]` per leg as the source of all clue content |
 | **City Selection** | Depends on Case Database | Reads `wrong_options` + `target_city` per leg to build the player's choice set |
 | **Case Brief Display** | Depends on Case Database | Reads `crime_description`, `criminal_alias`, `starting_city` |
 | **Globe Visualization** | Depends on Case Database | Reads `lat`/`lng` and `display_name` for all cities in the active case |
@@ -197,6 +216,8 @@ exclusively by other game systems at runtime.
 - [ ] `total_options` per move is always 3–5 (wrong_options length is always 2–4)
 - [ ] Case data loads from local JSON in under 100ms on a mid-range mobile device (reference: 2022-era Android mid-range, e.g. Samsung Galaxy A53 or equivalent — ~3GB RAM, Snapdragon 720G class)
 - [ ] All structural values (leg count, option count bounds) are read from data configuration, not hardcoded in application logic
+- [ ] Every leg has exactly 3 WitnessClue entries with non-empty `clue_text`
+- [ ] Every WitnessClue has at least 1 entry in its `signals` array
 
 ## Open Questions
 
@@ -205,4 +226,5 @@ exclusively by other game systems at runtime.
 | Where does the Case Database live at runtime? | Technical Director | **CLOSED** | Static JSON bundled with the app for MVP. API endpoint added in Vertical Slice to enable hot-patching cases post-launch without app update. |
 | How is the City list maintained? | Product Director | **CLOSED** | Fixed curated set of 200–500 cities. Open-ended list risks poor globe UX for obscure cities and makes wrong-option curation harder to control. |
 | What file format and tooling for case authoring — JSON, YAML, or a headless CMS? | Technical Director | **DEFERRED** | JSON for MVP. Headless CMS (e.g. Contentful) is the target for Vertical Slice — enables non-technical case authoring and is the right long-term content pipeline solution. Resolve before VS content sprint. |
-| Does `clue_text` format need to be structured (with metadata) rather than a plain string? | Clue Engine GDD author | **OPEN** | The Clue Engine GDD will define whether it needs structured clue data or whether a plain string is sufficient. Resolve during Clue Engine design. |
+| Does `clue_text` format need to be structured (with metadata) rather than a plain string? | Clue Engine GDD author | **CLOSED** | CLOSED — structured witness array adopted. Each leg has exactly 3 WitnessClue objects, each with `clue_text` (string) + `signals[]` (string array). Plain string rejected: signal tags are required for icon rendering and authoring validation. Resolved 2026-03-25. |
+| Wrong city selection method: curated per case vs. algorithmic generation? | Product Director | **CLOSED** | MVP answer: hand-curation. The schema mandates `wrong_options` (City[], length 2–4) per leg as authored content. Algorithmic generation deferred post-MVP — algorithmic selection risks difficulty variance and plausibility failures that are harder to catch without individual review. Curation is more work but produces higher quality wrong options. Resolved 2026-03-26. |
