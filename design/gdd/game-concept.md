@@ -1,17 +1,17 @@
 # Game Concept: Global Pursuit
 
 *Created: 2026-03-24*
-*Last Updated: 2026-03-25*
-*Status: Approved — core loop updated 2026-03-25*
+*Last Updated: 2026-03-26*
+*Status: Approved — design philosophy updated 2026-03-26*
 
 ---
 
 ## Elevator Pitch
 
-> A daily deduction game where you track a fleeing criminal across the world —
-> interpreting evolving clues to choose your next destination and capture the
-> target in 4 moves or fewer. Like Wordle's daily ritual, but built around
-> reasoning, not recall.
+> A daily geography game where you track a fleeing criminal across the world —
+> interpreting witness clues to chase them city by city and make the capture.
+> Like Wordle's daily ritual, but global. The more you know the world, the
+> faster you catch them.
 
 ---
 
@@ -38,11 +38,12 @@ showboating globe-trotter who leaves a trail of clues like a calling card,
 always one step ahead until suddenly, theatrically, they're not. Each clue
 is a thread — and you pull until the suspect has nowhere left to run.
 
-> **"You don't need to know the world. You need to read it."**
+> **"The smarter you are about the world, the faster you catch them."**
 
-This is the single most important sentence in the game. It answers every
-player's first question ("Do I need to be good at geography?") and must be
-delivered in onboarding within the first 5 seconds.
+This is the core promise. Geography knowledge is rewarded — clue 1 is
+designed to fire instant recognition for someone who knows the world.
+Clues 2 and 3 are the safety net for players who need to narrow it down.
+Everyone finishes; not everyone finishes fast.
 
 ---
 
@@ -81,8 +82,8 @@ evolving signals, not memorizing capitals.
 
 1. **Signal Funnel** — Clues evolve from broad (region, climate, economy) to precise (near-identifiers) across 4 moves, tightening the decision space with each step
 2. **Constrained Choice** — 3–5 city pins are highlighted on the globe per move; the player spins and explores to find them all. Only pinned cities are selectable — no open guessing. The act of finding the pins is part of the experience.
-3. **Dead-End Design** — Wrong cities yield no information and no penalty beyond move efficiency; tension without punishment
-4. **Path Efficiency Scoring** — Score is optimal moves vs actual moves; the skill layer that drives repeat play and competitive sharing
+3. **Dead-End Design** — Wrong cities yield no information. Player flies there, hears "never seen them," flies back to the globe. The cost is points, not lives.
+4. **Per-Leg Scoring** — Each leg starts at 100 pts. First witness is free. Each additional witness costs −20 pts. Each wrong city guess costs −25 pts. Score is revealed as a reward on the correct guess, not counted down during play. Max score per session: 400 (4 legs × 100). This is the skill layer that drives competition and sharing.
 5. **Globe as Game Board** — The globe is not decoration. It IS the selection UI. Players spin it to find highlighted city pins and tap to commit. The tactile act of spinning the globe to hunt for options is a core part of the feel. Discoverability mechanic required: players must know how many pins exist and roughly where to find them (counter + edge indicators).
 
 ---
@@ -206,9 +207,12 @@ The capture is the emotional payoff of every session. It is not a correct guess 
 
 6. **The Share Card** — Generated immediately. Format follows NYT Games model:
    - Criminal alias + crime in one line
-   - Efficiency score
-   - Route represented as emoji dots/arrows (no city names — no spoilers)
+   - Per-leg score with emoji tier (🔥100  🏆82  🎯65  🔥100)
+   - Total score out of 400
+   - No city names — no spoilers
    - "Global Pursuit · [date]"
+
+   **Score emoji tiers**: 🔥 = 100, 🏆 = 80–99, 🎯 = 60–79, 😅 = 40–59, 💀 = below 40
 
 **Juice requirements for the capture moment (Pillar 5):**
 - The correct tap should fire haptic feedback immediately
@@ -242,13 +246,18 @@ deduction standard and must be revised.
 
 ## Game Pillars
 
-### Pillar 1: Deduction Over Trivia
-Every correct answer must be reachable through reasoning, not geographic
-recall. A smart non-expert should be able to win; a geography expert with
-poor reasoning should be able to lose.
+### Pillar 1: Knowledge is Rewarded, Deduction is the Safety Net
+Geography knowledge is a genuine advantage. Clue 1 should fire instant
+recognition for someone who knows the world — that recognition earns
+maximum points and is the peak experience. Clues 2 and 3 exist for players
+who need help narrowing it down. Everyone can finish; not everyone finishes
+clean. The score gap between "I knew it" and "I needed all three clues"
+is the skill gradient that drives competition and sharing.
 
-*Design test*: "Does this clue reward someone who thinks carefully, or only
-someone who already knows the answer? If the latter, rewrite the clue."
+*Design test*: "Does clue 1 produce an immediate 'aha' for someone with
+solid geography knowledge? If it takes three clues for anyone to get there,
+the case is not rewarding enough. If clue 1 is so obvious that no skill is
+involved, it's too easy — rewrite it."
 
 ### Pillar 2: Tension Without Cruelty
 Failure is inefficiency, not punishment. Players always finish the case.
@@ -446,21 +455,28 @@ game helps you recover" without introducing geographic proximity as a signal.
 These principles govern what makes a clue valid before the full Clue Engine
 system GDD is authored. No case may be published without passing all four:
 
-1. **Reasoning Chain Test**: The correct answer must be reachable through a
-   chain of inferences from the clues. If you cannot write "Clue A implies X,
-   X + Clue B implies Y, Y points to City Z," the case is invalid.
-2. **Non-Expert Test**: Show the clues to someone who cannot name 10 world
-   capitals. If they cannot follow the reasoning chain when explained, the
-   clues are too knowledge-dependent.
-3. **Expert Trap Test**: A geography expert should see multiple plausible
-   cities from the clues, not one obvious answer. If expertise collapses the
-   decision, the clues are too easy and do not test deduction.
-4. **Safe Clue Categories**: Economic signals (industry type, economic tier),
-   cultural signals (customs, food, architecture style), environmental signals
-   (climate, terrain, vegetation), temporal signals (timezone-adjacent, seasonal
-   indicators), logistical signals (travel time, connection routes).
-   **Dangerous categories**: Specific landmarks, language/alphabet, historical
-   events, population statistics — these collapse into trivia.
+1. **Clue 1 Recognition Test**: Show clue 1 alone to someone with solid
+   geography knowledge. They should be able to name the correct city or narrow
+   it to 2–3 candidates. If clue 1 gives nothing to someone who knows the
+   world, it is too vague — rewrite it.
+2. **Clue 3 Safety Net Test**: Show all three clues to someone with limited
+   geography knowledge. They should be able to eliminate all but 1–2 options
+   through the clues alone. If they are still completely lost after clue 3,
+   the case is too hard and will feel unfair.
+3. **No Free Points Test**: Clue 1 should not be so obvious that any player
+   gets it immediately regardless of geography knowledge. If it's a giveaway,
+   every game ends at 100 pts and the scoring range collapses — no skill
+   gradient, no competition.
+4. **Evocative Not Encyclopaedic**: Clues should activate recognition through
+   vivid, specific detail — not list facts. "She asked where to watch the
+   harbour bridge" beats "coastal city in Oceania with major infrastructure."
+   Witness voice and a single sharp detail outperform a catalogue of signals.
+5. **Safe Clue Categories**: Iconic landmarks (described, not named), cultural
+   references, currency appearance, famous geography (the river, the mountain,
+   the bridge), seasonal/climate references, continent + feature combinations.
+   **Use with caution**: Obscure local references, political geography, recent
+   events — anything that requires specialised knowledge beyond general world
+   awareness.
 
 ### Open Questions
 
@@ -469,6 +485,7 @@ system GDD is authored. No case may be published without passing all four:
    *Resolve by*: `/design-system` — Clue Engine.
 2. **Wrong city selection method**: Curated per case vs. algorithmic?
    *Resolve by*: prototyping both and evaluating difficulty variance across test cases.
+3. **Wrong guess flow**: CLOSED — Fly mode confirmed. Wrong guess → player flies to the wrong city → witness delivers a "nope" line → globe reloads with wrong city greyed out → player picks again. Cost: −25 pts. No lives lost. Watch for session length if a player guesses wrong multiple times in one leg — may need a per-leg wrong-guess cap in future.
 3. **Day 2 hook**: What progression mechanic beyond streak sustains long-term habit?
    *Resolve by*: reviewing retention mechanics in comparable daily games (Duolingo, NYT Games).
 4. **Criminal route structure**: CLOSED — Option A confirmed. Criminal visits 4 cities in sequence anywhere in the world (globe-spanning). Starting city is given. 4 rounds of investigation follow. Round 4 ends with the capture. Route is fixed at case-creation time.
