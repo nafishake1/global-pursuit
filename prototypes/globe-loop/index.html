@@ -454,18 +454,26 @@
 // ────────────────────────────────────────────
 // DATA
 // ────────────────────────────────────────────
-const STREET_PHOTOS = {
-  'Berlin':        'https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&w=1600&q=80',
-  'Tokyo':         'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&w=1600&q=80',
-  'Sydney':        'https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?auto=format&w=1600&q=80',
-  'Cairo':         'https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&w=1600&q=80',
-  'Rio de Janeiro':'https://images.unsplash.com/photo-1483729558449-99ef09a8c325?auto=format&w=1600&q=80',
-  'Paris':         'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&w=1600&q=80',
-  'New York':      'https://images.unsplash.com/photo-1534430480872-3498386e7856?auto=format&w=1600&q=80',
-  'Dubai':         'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&w=1600&q=80',
-  'Bangkok':       'https://images.unsplash.com/photo-1508009603885-50cf7c079365?auto=format&w=1600&q=80',
-  'Istanbul':      'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?auto=format&w=1600&q=80',
+// Wikipedia city name overrides (where article title differs from game name)
+var WIKI_NAMES = {
+  'New York':      'New York City',
+  'Rio de Janeiro':'Rio de Janeiro',
+  'Ho Chi Minh':   'Ho Chi Minh City',
+  'São Paulo':     'São Paulo',
 };
+var _photoCache = {};
+function fetchWikiPhoto(city, callback) {
+  if (_photoCache[city] !== undefined) { callback(_photoCache[city]); return; }
+  var name = encodeURIComponent(WIKI_NAMES[city] || city);
+  fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + name)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var url = (d.originalimage && d.originalimage.source) || (d.thumbnail && d.thumbnail.source) || null;
+      _photoCache[city] = url;
+      callback(url);
+    })
+    .catch(function() { _photoCache[city] = null; callback(null); });
+}
 
 const WITNESS_AVATARS = {
   'Ticket Agent':'🎫','Café Owner':'☕','Hotel Concierge':'🛎️',
@@ -483,7 +491,7 @@ const CASES = [
     legs: [
       {
         target: 'Tokyo', targetLat: 35.68, targetLng: 139.69,
-        streetCity: 'Tokyo',
+
         witnesses: [
           { who:'Ticket Agent', clue:'"She asked for a window seat facing east — wanted to watch the sunrise over the Pacific. Very specific about it."' },
           { who:'Café Owner',   clue:'"Paid with yen — notes with Mount Fuji printed on them. Said her hotel was near the famous crossing where thousands walk at once."' },
@@ -504,7 +512,7 @@ const CASES = [
       },
       {
         target: 'Sydney', targetLat: -33.87, targetLng: 151.21,
-        streetCity: 'Sydney',
+
         witnesses: [
           { who:'Hotel Concierge', clue:'"She checked out early — said she had a harbour view. Said it was the most recognisable skyline she\'d ever seen."' },
           { who:'Barista',         clue:'"Left a magazine open — bookmarked page had a white shell-shaped building on the waterfront. She\'d circled it in pen."' },
@@ -525,7 +533,7 @@ const CASES = [
       },
       {
         target: 'Cairo', targetLat: 30.05, targetLng: 31.24,
-        streetCity: 'Cairo',
+
         witnesses: [
           { who:'Airport Staff', clue:'"She booked a connection heading south. Said she wanted to see the river — the great one. The ancient one."' },
           { who:'Café Owner',    clue:'"Kept scrolling through photos. Stone structures — enormous, triangular. Ancient. Asked if I\'d ever seen them in person."' },
@@ -546,7 +554,7 @@ const CASES = [
       },
       {
         target: 'Rio de Janeiro', targetLat: -22.91, targetLng: -43.17,
-        streetCity: 'Rio de Janeiro',
+
         witnesses: [
           { who:'Taxi Driver',     clue:'"She was excited — heading somewhere you could see a massive statue with its arms wide open, standing on a mountain above the whole city."' },
           { who:'Bartender',       clue:'"Ordered a caipirinha. Said it tasted better here than anywhere. Mentioned Copacabana — the beach, not the song."' },
@@ -576,7 +584,7 @@ const CASES = [
     legs: [
       {
         target: 'New York', targetLat: 40.71, targetLng: -74.01,
-        streetCity: 'New York',
+
         witnesses: [
           { who:'Ticket Agent',    clue:'"She hailed a cab the second she walked out. Said she was heading to the city that never sleeps. Her exact words."' },
           { who:'Café Owner',      clue:'"Left her newspaper open — headline about Wall Street. She\'d circled something about a meeting in Manhattan."' },
@@ -597,7 +605,7 @@ const CASES = [
       },
       {
         target: 'Dubai', targetLat: 25.20, targetLng: 55.27,
-        streetCity: 'Dubai',
+
         witnesses: [
           { who:'Taxi Driver',   clue:'"Heading to the Gulf — said she was going to see the tallest building in the world. Kept saying the city didn\'t exist fifty years ago."' },
           { who:'Market Vendor', clue:'"Paid in dirhams. Said the city went from a fishing village to skyscrapers within her lifetime. Seemed genuinely amazed."' },
@@ -618,7 +626,7 @@ const CASES = [
       },
       {
         target: 'Bangkok', targetLat: 13.75, targetLng: 100.52,
-        streetCity: 'Bangkok',
+
         witnesses: [
           { who:'Café Owner',  clue:'"Heading to Southeast Asia — golden temples, she kept saying. Said the city smelled like street food and she couldn\'t wait to get back."' },
           { who:'Taxi Driver', clue:'"She went straight to the Grand Palace — in a tuk-tuk, not a cab. Waved at me as she sped past."' },
@@ -639,7 +647,7 @@ const CASES = [
       },
       {
         target: 'Istanbul', targetLat: 41.01, targetLng: 28.95,
-        streetCity: 'Istanbul',
+
         witnesses: [
           { who:'Hotel Concierge', clue:'"She was thrilled — said she was heading somewhere you could have breakfast in Europe and dinner in Asia. Same city. Same day."' },
           { who:'Museum Guard',    clue:'"She mentioned the call to prayer from the Blue Mosque woke her every morning. Said the Bosphorus at sunset was worth the early alarm."' },
@@ -889,10 +897,18 @@ function renderWitnessStage() {
   var l  = leg();
   var ws = l.witnesses[S.activeClueTab];
 
-  // Street photo
-  var city = l.streetCity || l.target;
-  var photo = STREET_PHOTOS[city] || STREET_PHOTOS['Berlin'];
-  document.getElementById('witness-stage').style.backgroundImage = 'url(' + photo + ')';
+  // Street photo — show current city (where detective IS), not the target
+  var city = S.currentCity || C().startingCity;
+  var stage = document.getElementById('witness-stage');
+  // Dark fallback while photo loads
+  stage.style.backgroundImage = 'none';
+  stage.style.background = 'linear-gradient(160deg,#070b18 0%,#0d1a2e 100%)';
+  fetchWikiPhoto(city, function(url) {
+    if (url) {
+      stage.style.backgroundImage = 'url(' + url + ')';
+      stage.style.background = '';
+    }
+  });
 
   // Tabs
   var tabsHtml = '';
@@ -1019,62 +1035,36 @@ function onAcceptCase() {
   S.eliminatedIdxs=[]; S.legScores=[];
 
   var c = C();
+  S.currentCity = c.startingCity;
 
-  // Show globe, show flight overlay
+  // NYC as origin — show globe + start flight immediately, no geolocation wait
+  var fromLat = 40.71, fromLng = -74.01;
+  S.currentLat = fromLat; S.currentLng = fromLng;
+
   showGlobeStage();
   hideWitnessStage();
   hideStageOverlay();
   hidePickHint();
   showHUD();
-  showFlightOverlay('Deploying to', c.startingCity, 'Tracking your flight path…');
+  showFlightOverlay('Deploying to', c.startingCity, 'Flying from New York…');
 
-  function doFlight(fromLat, fromLng) {
-    S.currentLat = fromLat; S.currentLng = fromLng;
+  // Point globe at NYC instantly, then arc to starting city
+  globeFlyTo(fromLat, fromLng, 2.2, 0);
 
-    if (!World) { initGlobe(); }
+  setTimeout(function() {
+    hideFlightOverlay();
+    addFlightArc(fromLat, fromLng, c.startLat, c.startLng, '#e8b84b', 2400);
+    globeFlyTo(c.startLat, c.startLng, 1.8, 2600);
 
-    // Start globe pointed at user
     setTimeout(function() {
-      globeFlyTo(fromLat, fromLng, 2.2, 0);
-
-      setTimeout(function() {
-        hideFlightOverlay();
-        addFlightArc(fromLat, fromLng, c.startLat, c.startLng, '#e8b84b', 2200);
-        globeFlyTo(c.startLat, c.startLng, 1.8, 2400);
-
-        setTimeout(function() {
-          clearArcs();
-          S.currentLat = c.startLat; S.currentLng = c.startLng;
-          clearPins();
-          // Show witness stage
-          S.activeClueTab = 0;
-          renderWitnessStage();
-          updateHUD();
-        }, 2800);
-      }, 600);
-    }, 200);
-  }
-
-  // Geolocation
-  if (navigator.geolocation) {
-    var done = false;
-    var timer = setTimeout(function() {
-      if (!done) { done=true; doFlight(S.userLat, S.userLng); }
+      clearArcs();
+      S.currentLat = c.startLat; S.currentLng = c.startLng;
+      clearPins();
+      S.activeClueTab = 0;
+      renderWitnessStage();
+      updateHUD();
     }, 3000);
-    navigator.geolocation.getCurrentPosition(
-      function(pos) {
-        if (!done) {
-          done=true; clearTimeout(timer);
-          S.userLat = pos.coords.latitude; S.userLng = pos.coords.longitude;
-          doFlight(S.userLat, S.userLng);
-        }
-      },
-      function() { if(!done){done=true;clearTimeout(timer);doFlight(S.userLat,S.userLng);} },
-      { timeout:2800, maximumAge:60000 }
-    );
-  } else {
-    doFlight(S.userLat, S.userLng);
-  }
+  }, 900);
 }
 
 function buyWitness() {
@@ -1110,6 +1100,7 @@ function handleCityTap(name, idx) {
     Audio.correct();
     flash('rgba(34,197,94,0.2)', 0.5);
     S.legScores.push(calcScore());
+    S.currentCity = name; // detective has now arrived here
 
     var opt = leg().options[idx];
     clearPins();
