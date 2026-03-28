@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Global Pursuit — Prototype v4</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d14;
+      --card: #1a1a2e;
+      --border: #2a2a42;
+      --gold: #e8b84b;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --dim: #6b7280;
+      --green: #22c55e;
+      --red: #ef4444;
+      --radius: 16px;
+    }
+
+    html, body { height: 100%; background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased; }
+
+    /* ── Screens ─────────────────────────────── */
+    .screen { display: none; min-height: 100vh; flex-direction: column; }
+    .screen.active { display: flex; }
+
+    /* ── Card screens ────────────────────────── */
+    #card-screen { align-items: flex-start; justify-content: center; padding: 20px 16px 40px; }
+    .app-inner { width: 100%; max-width: 540px; }
+    .proto-banner {
+      text-align: center; font-size: 10px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim);
+      padding: 10px 0 18px; border-bottom: 1px solid var(--border); margin-bottom: 24px;
+    }
+
+    /* ── Chat screen ─────────────────────────── */
+    #chat-screen { flex-direction: column; height: 100vh; max-width: 540px; margin: 0 auto; width: 100%; }
+    .chat-topbar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px 12px; background: #111120;
+      border-bottom: 1px solid var(--border); flex-shrink: 0;
+      position: sticky; top: 0; z-index: 10;
+    }
+    .chat-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: linear-gradient(135deg, #2a1a00, #e8b84b33);
+      border: 1px solid var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 800; color: var(--gold); letter-spacing: 0.05em; flex-shrink: 0;
+    }
+    .chat-meta { flex: 1; }
+    .chat-name { font-size: 15px; font-weight: 700; color: var(--text); }
+    .chat-status { font-size: 11px; color: var(--gold); letter-spacing: 0.05em; margin-top: 1px; }
+    .chat-messages {
+      flex: 1; overflow-y: auto; padding: 20px 16px 12px;
+      display: flex; flex-direction: column; justify-content: flex-end; gap: 10px;
+      scrollbar-width: none; -ms-overflow-style: none; overflow-anchor: none;
+    }
+    .chat-messages::-webkit-scrollbar { display: none; }
+
+    .bubble {
+      max-width: 82%; padding: 11px 15px; border-radius: 20px; border-bottom-left-radius: 5px;
+      font-size: 14px; line-height: 1.55; color: var(--text);
+      background: var(--card); border: 1px solid var(--border); align-self: flex-start;
+      animation: bubbleIn 0.28s cubic-bezier(0.16,1,0.3,1) forwards; opacity: 0;
+    }
+    @keyframes bubbleIn {
+      from { opacity: 0; transform: translateY(8px) scale(0.96); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .typing-indicator {
+      display: flex; gap: 4px; align-items: center; padding: 12px 16px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; border-bottom-left-radius: 5px;
+      width: fit-content; align-self: flex-start; animation: bubbleIn 0.2s ease forwards;
+    }
+    .typing-indicator span {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--dim);
+      animation: typingBounce 1.1s ease-in-out infinite;
+    }
+    .typing-indicator span:nth-child(2) { animation-delay: 0.18s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.36s; }
+    @keyframes typingBounce {
+      0%,60%,100% { transform: translateY(0); opacity: 0.5; }
+      30%          { transform: translateY(-5px); opacity: 1; }
+    }
+
+    /* ── iMessage input bar ──────────────────── */
+    .chat-input-bar {
+      flex-shrink: 0;
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px 28px;
+      background: #111120;
+      border-top: 1px solid var(--border);
+    }
+    .chat-input-field {
+      flex: 1;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid #333350;
+      border-radius: 22px;
+      padding: 10px 16px;
+      font-size: 15px; color: var(--text);
+      outline: none; pointer-events: none; cursor: default;
+      font-family: inherit;
+    }
+    .chat-input-field::placeholder { color: #555570; }
+    .chat-send-btn {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: #333350; border: none; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; color: #555570; cursor: default;
+    }
+
+    /* ── Attachment chip ─────────────────────── */
+    .attach-chip {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 10px 14px; cursor: pointer;
+      align-self: flex-start; max-width: 86%;
+      animation: bubbleIn 0.32s cubic-bezier(0.16,1,0.3,1) forwards; opacity: 0;
+      transition: border-color 0.2s;
+    }
+    .attach-chip:active { opacity: 0.8; transform: scale(0.98); }
+    .attach-icon-box {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, #9a6810, #e8b84b);
+      border-radius: 9px; display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .attach-meta { flex: 1; min-width: 0; }
+    .attach-name { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .attach-sub { font-size: 11px; color: var(--dim); margin-top: 2px; }
+    .attach-arrow { font-size: 18px; color: var(--dim); }
+
+    /* ── Expanded case file ──────────────────── */
+    .case-file-wrap {
+      align-self: flex-start; max-width: 90%;
+      animation: caseFileOpen 0.4s cubic-bezier(0.16,1,0.3,1) forwards;
+      opacity: 0; border-radius: 14px; overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    }
+    @keyframes caseFileOpen {
+      from { opacity: 0; transform: scale(0.9) translateY(10px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .artifact-photo {
+      background: linear-gradient(160deg, #1e1205 0%, #3d2509 50%, #1e1205 100%);
+      padding: 28px 20px 22px; display: flex; flex-direction: column;
+      align-items: center; text-align: center; min-height: 140px; position: relative;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .artifact-photo::before {
+      content: ''; position: absolute; inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 22px, rgba(232,184,75,0.03) 22px, rgba(232,184,75,0.03) 23px);
+    }
+    .artifact-emoji { font-size: 54px; position: relative; z-index: 1; filter: drop-shadow(0 0 16px rgba(232,184,75,0.45)); }
+    .artifact-name { font-size: 11px; font-weight: 800; color: rgba(232,184,75,0.85); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 10px; position: relative; z-index: 1; }
+    .artifact-desc { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 3px; letter-spacing: 0.06em; position: relative; z-index: 1; }
+    .case-file-body { background: #c4913a; padding: 14px 16px 16px; }
+    .case-file-stamp {
+      font-size: 9px; font-weight: 900; letter-spacing: 0.14em; color: rgba(70,35,0,0.5);
+      text-transform: uppercase; text-decoration: line-through;
+      text-decoration-color: rgba(160,0,0,0.4); margin-bottom: 8px;
+    }
+    .case-file-title { font-size: 17px; font-weight: 800; color: #280f00; margin-bottom: 5px; }
+    .case-file-desc { font-size: 12px; color: rgba(40,15,0,0.72); line-height: 1.55; margin-bottom: 10px; }
+    .case-file-lastseen { font-size: 12px; color: rgba(40,15,0,0.6); margin-bottom: 14px; font-weight: 600; }
+    .case-file-lastseen strong { color: #280f00; }
+    .btn-gonow {
+      display: block; width: 100%; padding: 14px 20px;
+      background: #1a0a00; color: var(--gold);
+      border: none; border-radius: 9px; font-size: 15px; font-weight: 800;
+      letter-spacing: 0.04em; cursor: pointer; text-align: center;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn-gonow:active { opacity: 0.85; transform: scale(0.98); }
+
+    /* ── Globe screen ────────────────────────── */
+    #globe-screen { flex-direction: column; height: 100vh; background: #04040c; }
+    #globe-hud {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      padding: 16px 20px 12px;
+      background: linear-gradient(to bottom, rgba(4,4,12,0.98) 80%, transparent);
+      flex-shrink: 0; z-index: 2;
+    }
+    .hud-left { display: flex; flex-direction: column; gap: 3px; }
+    #hud-case { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+    #hud-target { font-size: 15px; font-weight: 800; color: var(--text); display: flex; align-items: center; gap: 6px; }
+    #hud-target::before {
+      content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+      background: var(--gold); animation: pulse 1.5s ease-in-out infinite; box-shadow: 0 0 6px var(--gold);
+    }
+    @keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(0.6); } }
+    .hud-right { text-align: right; }
+    .hud-score-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
+    #hud-score { font-size: 26px; font-weight: 900; color: var(--gold); line-height: 1.1; text-shadow: 0 0 12px rgba(232,184,75,0.4); }
+    #hud-witnesses { font-size: 10px; color: var(--dim); margin-top: 1px; }
+
+    #globe-canvas-wrap { flex: 1; position: relative; overflow: hidden; }
+    #globe-canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: grab; display: block; }
+    #globe-canvas:active { cursor: grabbing; }
+    #globe-labels { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+    .globe-label {
+      position: absolute; font-size: 11px; font-weight: 700; color: #e8b84b;
+      text-shadow: 0 0 8px rgba(232,184,75,0.5), 1px 1px 3px rgba(0,0,0,0.95);
+      letter-spacing: 0.04em; white-space: nowrap; pointer-events: none; transition: opacity 0.15s;
+    }
+    .globe-label.elim { color: #ef4444; text-decoration: line-through; opacity: 0.5 !important; }
+    #globe-hint {
+      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: rgba(26,26,46,0.9); border: 1px solid var(--border);
+      border-radius: 20px; padding: 8px 16px; font-size: 12px; color: var(--muted);
+      white-space: nowrap; pointer-events: none; z-index: 2;
+      animation: hintFade 0.5s ease 0.8s both;
+    }
+    @keyframes hintFade { from { opacity:0; transform:translateX(-50%) translateY(6px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+
+    /* ── Intro overlay ───────────────────────── */
+    #globe-overlay {
+      position: absolute; inset: 0; z-index: 10;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(4,4,12,0.85); pointer-events: none;
+      transition: opacity 0.6s ease;
+    }
+    #globe-overlay.fade-out { opacity: 0; pointer-events: none; }
+    .globe-overlay-text { text-align: center; }
+    .globe-overlay-text .ot-label { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+    .globe-overlay-text .ot-city { font-size: 28px; font-weight: 900; color: var(--text); }
+    .globe-overlay-text .ot-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+    /* ── Card styles ─────────────────────────── */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 20px; margin-bottom: 14px; }
+    .label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); margin-bottom: 8px; }
+    h1 { font-size: 24px; font-weight: 800; color: var(--text); line-height: 1.2; margin-bottom: 6px; }
+    h2 { font-size: 19px; font-weight: 700; color: var(--text); line-height: 1.3; margin-bottom: 8px; }
+    .subtitle { font-size: 14px; color: var(--muted); line-height: 1.55; }
+    .director-block { border-left: 3px solid var(--gold); padding: 12px 14px; background: rgba(232,184,75,0.06); border-radius: 0 8px 8px 0; margin: 14px 0; }
+    .director-block p { font-size: 14px; font-style: italic; color: var(--text); line-height: 1.6; }
+    .director-block .attr { font-size: 11px; color: var(--gold); font-weight: 600; margin-top: 6px; font-style: normal; letter-spacing: 0.04em; }
+    .score-display { display: flex; align-items: baseline; gap: 8px; margin: 14px 0 6px; }
+    .score-big { font-size: 44px; font-weight: 900; color: var(--gold); line-height: 1; }
+    .score-label { font-size: 13px; color: var(--muted); }
+    .score-hint { font-size: 12px; color: var(--dim); margin-bottom: 14px; }
+    .progress-dots { display: flex; gap: 8px; align-items: center; margin-bottom: 18px; }
+    .dot { width: 26px; height: 5px; border-radius: 3px; background: var(--border); transition: background 0.3s; }
+    .dot.active { background: var(--gold); }
+    .dot.done   { background: var(--green); }
+    .witness-dots { display: flex; gap: 6px; margin-bottom: 4px; }
+    .w-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: background 0.25s, box-shadow 0.25s; }
+    .w-dot.active { background: var(--gold); box-shadow: 0 0 6px rgba(232,184,75,0.5); }
+    .clue-card { background: rgba(255,255,255,0.035); border: 1px solid var(--border); border-radius: 10px; padding: 13px 15px; margin-bottom: 10px; }
+    .clue-card.clue-new { animation: clueReveal 0.38s cubic-bezier(0.16,1,0.3,1) forwards; border-color: rgba(232,184,75,0.3); }
+    @keyframes clueReveal { from { opacity:0; transform:translateX(-14px); } to { opacity:1; transform:translateX(0); } }
+    .clue-who { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); margin-bottom: 5px; }
+    .clue-text { font-size: 14px; color: var(--text); line-height: 1.6; }
+    .btn { display: block; width: 100%; padding: 15px 20px; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; border: none; transition: opacity 0.15s, transform 0.1s; text-align: center; letter-spacing: 0.02em; }
+    .btn:active { transform: scale(0.98); opacity: 0.85; }
+    .btn-primary { background: var(--gold); color: #0d0d14; }
+    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+    .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+    .btn + .btn { margin-top: 10px; }
+    .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 20px; font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
+    .badge-red   { background: rgba(239,68,68,0.12);  border: 1px solid rgba(239,68,68,0.3);  color: var(--red);   }
+    .badge-green { background: rgba(34,197,94,0.12);  border: 1px solid rgba(34,197,94,0.3);  color: var(--green); }
+    .badge-gold  { background: rgba(232,184,75,0.12); border: 1px solid rgba(232,184,75,0.3); color: var(--gold);  }
+    .nope-block { border-left: 3px solid var(--red); padding: 12px 14px; background: rgba(239,68,68,0.06); border-radius: 0 8px 8px 0; margin: 12px 0; }
+    .nope-block p { font-size: 14px; font-style: italic; color: var(--text); line-height: 1.6; }
+    .nope-block .attr { font-size: 11px; color: var(--red); font-weight: 600; margin-top: 5px; font-style: normal; }
+    .feedback-pill { display: inline-block; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); border-radius: 8px; padding: 7px 13px; font-size: 13px; color: var(--red); margin: 10px 0 14px; }
+    .score-reveal { text-align: center; padding: 18px 0; }
+    .score-reveal .number { font-size: 72px; font-weight: 900; color: var(--gold); line-height: 1; display: block; animation: scorePopIn 0.5s cubic-bezier(0.16,1,0.3,1) forwards; }
+    @keyframes scorePopIn { from { transform:scale(0.4); opacity:0; } 60% { transform:scale(1.1); } to { transform:scale(1); opacity:1; } }
+    .score-reveal .emoji { font-size: 34px; margin: 4px 0; display: block; animation: emojiBounce 0.6s cubic-bezier(0.16,1,0.3,1) 0.2s both; }
+    @keyframes emojiBounce { from { transform:scale(0) rotate(-15deg); opacity:0; } 70% { transform:scale(1.2) rotate(5deg); } to { transform:scale(1) rotate(0deg); opacity:1; } }
+    .score-reveal .city-confirm { font-size: 12px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 6px; animation: fadeUp 0.4s ease 0.35s both; }
+    .capture-stamp { display: inline-block; border: 3px solid var(--red); border-radius: 5px; padding: 7px 16px; font-size: 20px; font-weight: 900; letter-spacing: 0.15em; color: var(--red); text-transform: uppercase; transform: rotate(-4deg); margin: 10px 0 14px; animation: stampAppear 0.4s cubic-bezier(0.16,1,0.3,1) 0.5s both; opacity: 0.85; }
+    @keyframes stampAppear { from { transform:rotate(-4deg) scale(1.6); opacity:0; } to { transform:rotate(-4deg) scale(1); opacity:0.85; } }
+    .leg-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); animation: fadeUp 0.3s ease both; }
+    .leg-row:last-child { border-bottom: none; }
+    .leg-row:nth-child(1) { animation-delay: 0.05s; }
+    .leg-row:nth-child(2) { animation-delay: 0.12s; }
+    .leg-row:nth-child(3) { animation-delay: 0.19s; }
+    .leg-row:nth-child(4) { animation-delay: 0.26s; }
+    .leg-city { font-size: 14px; color: var(--text); font-weight: 600; }
+    .leg-score-right { display: flex; align-items: center; gap: 8px; }
+    .leg-score-num { font-size: 17px; font-weight: 800; color: var(--gold); }
+    .leg-emoji { font-size: 17px; }
+    .total-row { display: flex; justify-content: space-between; align-items: baseline; padding: 13px 0 0; margin-top: 4px; border-top: 2px solid var(--border); animation: fadeUp 0.3s ease 0.35s both; }
+    .total-label { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+    .total-num { font-size: 26px; font-weight: 900; color: var(--gold); }
+    .total-max { font-size: 13px; color: var(--dim); }
+    .share-card { background: #0a0a12; border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; font-family: 'Courier New', monospace; font-size: 14px; color: var(--text); line-height: 1.7; white-space: pre; margin: 14px 0; overflow-x: auto; animation: stampDrop 0.5s cubic-bezier(0.16,1,0.3,1) 0.4s both; }
+    @keyframes stampDrop { from { transform:scale(1.04) translateY(-6px); opacity:0; } to { transform:scale(1) translateY(0); opacity:1; } }
+    .copy-feedback { font-size: 12px; color: var(--green); text-align: center; margin-top: -4px; margin-bottom: 8px; height: 16px; }
+    .case-nav { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+    .case-num { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); }
+    .case-criminal { font-size: 10px; color: var(--dim); }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+    .result-header { text-align: center; padding: 6px 0 18px; }
+    .result-header h1 { font-size: 26px; color: var(--gold); text-align: center; }
+    .result-header .sub { font-size: 13px; color: var(--muted); margin-top: 5px; text-align: center; }
+
+    /* ── Animations ──────────────────────────── */
+    @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideUp { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:translateY(0); } }
+    .slide-up { animation: slideUp 0.3s cubic-bezier(0.16,1,0.3,1) forwards; }
+    #flash-overlay { position:fixed; inset:0; pointer-events:none; z-index:200; opacity:0; }
+  </style>
+</head>
+<body>
+
+<!-- ── FLASH OVERLAY ─────────────────────────── -->
+<div id="flash-overlay"></div>
+
+<!-- ── CHAT SCREEN ───────────────────────────── -->
+<div id="chat-screen" class="screen active">
+  <div class="chat-topbar">
+    <div class="chat-avatar">DIR</div>
+    <div class="chat-meta">
+      <div class="chat-name">Director</div>
+      <div class="chat-status">● Encrypted Channel</div>
+    </div>
+    <div style="font-size:18px;">🔒</div>
+  </div>
+  <div class="chat-messages" id="chat-messages"></div>
+  <div class="chat-input-bar">
+    <input class="chat-input-field" placeholder="iMessage" readonly tabindex="-1">
+    <button class="chat-send-btn">↑</button>
+  </div>
+</div>
+
+<!-- ── GLOBE SCREEN ───────────────────────────── -->
+<div id="globe-screen" class="screen">
+  <div id="globe-hud">
+    <div class="hud-left">
+      <div id="hud-case">Case #– · Move – of 4</div>
+      <div id="hud-target">In transit…</div>
+    </div>
+    <div class="hud-right">
+      <div class="hud-score-label">Score</div>
+      <div id="hud-score">100</div>
+      <div id="hud-witnesses">W1 revealed</div>
+    </div>
+  </div>
+  <div id="globe-canvas-wrap">
+    <canvas id="globe-canvas"></canvas>
+    <div id="globe-labels"></div>
+    <div id="globe-overlay">
+      <div class="globe-overlay-text">
+        <div class="ot-label" id="ot-label">Deploying to</div>
+        <div class="ot-city" id="ot-city">Berlin</div>
+        <div class="ot-sub" id="ot-sub">Tracking flight path…</div>
+      </div>
+    </div>
+    <div id="globe-hint">Tap a city to guess</div>
+  </div>
+</div>
+
+<!-- ── CARD SCREEN ───────────────────────────── -->
+<div id="card-screen" class="screen">
+  <div class="app-inner">
+    <div class="proto-banner">PROTOTYPE v4 · daily case runner</div>
+    <div id="screen-content"></div>
+  </div>
+</div>
+
+<script src="three.min.js"></script>
+<script src="topojson.min.js"></script>
+<script>
+// ─────────────────────────────────────────────
+// CASES
+// ─────────────────────────────────────────────
+const CASES = [
+  {
+    id: 'case-001', number: 42, criminal: 'The Courier',
+    artifact: { emoji: '📜', name: 'Illuminated Manuscript', desc: 'Medieval — c. 1250 AD' },
+    crime: 'A rare illuminated manuscript vanished from a Berlin auction house. Security footage shows a lone figure slipping out a rear exit with a flat package under one arm.',
+    startingCity: 'Berlin', startLat: 52.52, startLng: 13.41,
+    directorBrief: 'The Courier has gone dark. We\'re already three steps behind. Last confirmed sighting: Berlin. The manuscript cannot leave the country. I need you in the field now.',
+    legs: [
+      {
+        target: 'Tokyo',
+        witnesses: [
+          { who: 'Ticket Agent',  clue: '"She asked for a window seat facing east — wanted to watch the sunrise over the Pacific. Very specific about it."' },
+          { who: 'Café Owner',    clue: '"Paid with yen — notes with Mount Fuji printed on them. Said her hotel was near the famous crossing where thousands walk at once."' },
+          { who: 'Taxi Driver',   clue: '"Dropped her at Narita. Couldn\'t stop talking about the bullet train. Said nothing in the world compares."' },
+        ],
+        options: [
+          { name: 'Tokyo',    lat: 35.68,  lng: 139.69 },
+          { name: 'Seoul',    lat: 37.57,  lng: 126.98 },
+          { name: 'Shanghai', lat: 31.23,  lng: 121.47 },
+          { name: 'Beijing',  lat: 39.91,  lng: 116.39 },
+        ],
+        correct: 0,
+        nopeLines: [
+          { who: 'Taxi Driver',     line: '"I\'ve driven every street in this city. I haven\'t had that passenger."' },
+          { who: 'Hotel Concierge', line: '"Every guest comes through my desk. That guest has never come through my desk."' },
+          { who: 'Café Owner',      line: '"I know every customer. That face has never sat at my tables."' },
+        ]
+      },
+      {
+        target: 'Sydney',
+        witnesses: [
+          { who: 'Hotel Concierge', clue: '"She checked out early — said she had a harbour view. Said it was the most recognisable skyline she\'d ever seen."' },
+          { who: 'Barista',         clue: '"Left a magazine open — bookmarked page had a white shell-shaped building on the waterfront. She\'d circled it in pen."' },
+          { who: 'Market Vendor',   clue: '"Paid in Australian dollars. Said she was meeting someone at Bondi — the beach, not a café. Very clear about that."' },
+        ],
+        options: [
+          { name: 'Sydney',    lat: -33.87, lng: 151.21 },
+          { name: 'Melbourne', lat: -37.81, lng: 144.97 },
+          { name: 'Auckland',  lat: -36.86, lng: 174.76 },
+          { name: 'Cape Town', lat: -33.93, lng:  18.42 },
+        ],
+        correct: 0,
+        nopeLines: [
+          { who: 'Hotel Concierge', line: '"Every check-in comes through me. That name has never come through me."' },
+          { who: 'Taxi Driver',     line: '"I know this city. That passenger hasn\'t been in my cab."' },
+          { who: 'Café Owner',      line: '"I know every customer. That customer has never been in here."' },
+        ]
+      },
+      {
+        target: 'Cairo',
+        witnesses: [
+          { who: 'Airport Staff', clue: '"She booked a connection heading south. Said she wanted to see the river — the great one. The ancient one."' },
+          { who: 'Café Owner',    clue: '"Kept scrolling through photos. Stone structures — enormous, triangular. Ancient. Asked if I\'d ever seen them in person."' },
+          { who: 'Museum Guard',  clue: '"Asked for directions to the Egyptian Museum. Said she needed to see the artefacts before a meeting near the Sphinx."' },
+        ],
+        options: [
+          { name: 'Cairo',        lat:  30.05, lng:  31.24 },
+          { name: 'Nairobi',      lat:  -1.29, lng:  36.82 },
+          { name: 'Casablanca',   lat:  33.57, lng:  -7.59 },
+          { name: 'Johannesburg', lat: -26.20, lng:  28.04 },
+        ],
+        correct: 0,
+        nopeLines: [
+          { who: 'Museum Guard',  line: '"I watch everyone who enters. That face has never entered these galleries."' },
+          { who: 'Café Owner',    line: '"I would remember that order. I don\'t."' },
+          { who: 'Airport Staff', line: '"That name isn\'t on any manifest through this terminal."' },
+        ]
+      },
+      {
+        target: 'Rio de Janeiro',
+        witnesses: [
+          { who: 'Taxi Driver',     clue: '"She was excited — heading somewhere you could see a massive statue with its arms wide open, standing on a mountain above the whole city."' },
+          { who: 'Bartender',       clue: '"Ordered a caipirinha. Said it tasted better here than anywhere. Mentioned Copacabana — the beach, not the song."' },
+          { who: 'Hotel Concierge', clue: '"Left a postcard — Sugar Loaf Mountain on the front. Paid in reais. Said her contact was waiting near the harbour."' },
+        ],
+        options: [
+          { name: 'Rio de Janeiro', lat: -22.91, lng: -43.17 },
+          { name: 'São Paulo',      lat: -23.55, lng: -46.63 },
+          { name: 'Buenos Aires',   lat: -34.60, lng: -58.38 },
+          { name: 'Lima',           lat: -12.04, lng: -77.03 },
+        ],
+        correct: 0,
+        nopeLines: [
+          { who: 'Bartender',       line: '"I remember every face at this bar. That face has never ordered here."' },
+          { who: 'Hotel Concierge', line: '"Every guest comes through this lobby. That guest has not."' },
+          { who: 'Taxi Driver',     line: '"I\'ve driven every corner of this city. That ride hasn\'t been in my cab."' },
+        ]
+      }
+    ]
+  },
+  {
+    id: 'case-002', number: 43, criminal: 'The Architect',
+    artifact: { emoji: '📐', name: 'Infrastructure Blueprints', desc: 'Classified — Eyes Only' },
+    crime: 'Classified infrastructure blueprints were lifted from a Paris government archive. Intelligence suggests they\'re moving fast — the buyer is waiting somewhere across the globe.',
+    startingCity: 'Paris', startLat: 48.85, startLng: 2.35,
+    directorBrief: 'The blueprints cannot reach the buyer. Every hour they\'re in transit is a national security failure. The Architect is the best we\'ve ever chased. Which is why I\'m sending you.',
+    legs: [
+      {
+        target: 'New York',
+        witnesses: [
+          { who: 'Ticket Agent',    clue: '"She hailed a cab the second she walked out. Said she was heading to the city that never sleeps. Her exact words."' },
+          { who: 'Café Owner',      clue: '"Left her newspaper open — headline about Wall Street. She\'d circled something about a meeting in Manhattan."' },
+          { who: 'Hotel Concierge', clue: '"Checked out complaining it was too loud to sleep. Times Square, she said. Then laughed and said she loved it anyway."' },
+        ],
+        options: [
+          { name: 'New York',    lat:  40.71, lng:  -74.01 },
+          { name: 'London',      lat:  51.51, lng:   -0.13 },
+          { name: 'Chicago',     lat:  41.88, lng:  -87.63 },
+          { name: 'Los Angeles', lat:  34.05, lng: -118.24 },
+        ],
+        correct: 0,
+        nopeLines: [
+          { who: 'Hotel Concierge', line: '"Every guest comes through me. That guest hasn\'t."' },
+          { who: 'Taxi Driver',     line: '"I\'d remember that fare. I don\'t."' },
+          { who: 'Café Owner',      line: '"That\'s not a face I\'ve seen. I\'d remember."' },
+        ]
+      },
+      {
+        target: 'Dubai',
+        witnesses: [
+          { who: 'Taxi Driver',   clue: '"Heading to the Gulf — said she was going to see the tallest building in the world. Kept saying the city didn\'t exist fifty years ago. Just desert and fishing boats."' },
+          { who: 'Market Vendor', clue: '"Paid in dirhams. Said the city went from a fishing village to skyscrapers within her lifetime. Seemed genuinely amazed."' },
+          { who: 'Airport Staff', clue: '"She was on the Dubai flight. Asked which floor the observation deck was on at the Burj Khalifa. I told her the 124th."' },
+        ],
+        options: [
+          { name: 'Dubai',     lat: 25.20, lng: 55.27 },
+          { name: 'Abu Dhabi', lat: 24.47, lng: 54.37 },
+          { name: 'Doha',      lat: 25.29, lng: 51.53 },
+          { name: 'Riyadh',    lat: 24.69, lng: 46.72 },
+        ],
+        correct: 0,
+        nopeLines: [
+          { who: 'Airport Staff',   line: '"That passenger hasn\'t come through this gate."' },
+          { who: 'Hotel Concierge', line: '"That name is not in my system."' },
+          { who: 'Market Vendor',   line: '"That face hasn\'t passed my stall."' },
+        ]
+      },
+      {
+        target: 'Bangkok',
+        witnesses: [
+          { who: 'Café Owner',  clue: '"Heading to Southeast Asia — golden temples, she kept saying. Said the city smelled like street food and she couldn\'t wait to get back."' },
+          { who: 'Taxi Driver', clue: '"She went straight to the Grand Palace — in a tuk-tuk, not a cab. Waved at me as she sped past."' },
+          { who: 'Bartender',   clue: '"Mentioned Khao San Road. Said she was meeting someone at the floating market at dawn. Left a generous tip in Thai baht."' },
+        ],
+        options: [
+          { name: 'Bangkok',      lat:  13.75, lng: 100.52 },
+          { name: 'Singapore',    lat:   1.35, lng: 103.82 },
+          { name: 'Kuala Lumpur', lat:   3.14, lng: 101.69 },
+          { name: 'Ho Chi Minh',  lat:  10.82, lng: 106.66 },
+        ],
+        correct: 0,
+        nopeLines: [
+          { who: 'Bartender',   line: '"I remember every face at this bar. That face hasn\'t been here."' },
+          { who: 'Café Owner',  line: '"Every customer gets a receipt. No receipt for that customer."' },
+          { who: 'Taxi Driver', line: '"That\'s not a fare I\'ve had. I would know."' },
+        ]
+      },
+      {
+        target: 'Istanbul',
+        witnesses: [
+          { who: 'Hotel Concierge', clue: '"She was thrilled — said she was heading somewhere you could have breakfast in Europe and dinner in Asia. Same city. Same day."' },
+          { who: 'Museum Guard',    clue: '"She mentioned the call to prayer from the Blue Mosque woke her every morning. Said the Bosphorus at sunset was worth the early alarm."' },
+          { who: 'Café Owner',      clue: '"Left a postcard of the Hagia Sophia. Paid in lira. Said her contact was waiting near the Grand Bazaar."' },
+        ],
+        options: [
+          { name: 'Istanbul', lat: 41.01, lng:  28.95 },
+          { name: 'Athens',   lat: 37.98, lng:  23.73 },
+          { name: 'Rome',     lat: 41.90, lng:  12.50 },
+          { name: 'Cairo',    lat: 30.05, lng:  31.24 },
+        ],
+        correct: 0,
+        nopeLines: [
+          { who: 'Hotel Concierge', line: '"Every guest comes through this door. That guest hasn\'t."' },
+          { who: 'Museum Guard',    line: '"I watch these galleries all day. That visitor hasn\'t passed through."' },
+          { who: 'Café Owner',      line: '"I know every regular. And I\'d remember a first visit like that."' },
+        ]
+      }
+    ]
+  }
+];
+
+// ─────────────────────────────────────────────
+// GAME STATE
+// ─────────────────────────────────────────────
+let S = {
+  screen: 'brief', caseIdx: 0, legIdx: 0,
+  witnessIdx: 0, wrongGuessesThisLeg: 0,
+  eliminatedIdxs: [], legScores: [],
+  wrongCityName: null, wrongCityNope: null, correctCityName: null,
+};
+
+function C()   { return CASES[S.caseIdx]; }
+function leg() { return C().legs[S.legIdx]; }
+function calcScore() { return Math.max(0, 100 - S.witnessIdx * 20 - S.wrongGuessesThisLeg * 25); }
+function legEmoji(s) { return s>=100?'🔥':s>=80?'🏆':s>=60?'🎯':s>=40?'😅':'💀'; }
+
+// ─────────────────────────────────────────────
+// AUDIO ENGINE
+// ─────────────────────────────────────────────
+const Audio = (function() {
+  let ctx = null;
+  function getCtx() {
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+  function tone(freq, t, dur, type, vol) {
+    const c = getCtx(), o = c.createOscillator(), g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    o.type = type||'sine'; o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(vol||0.12, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.start(t); o.stop(t + dur + 0.02);
+  }
+  return {
+    click:   function() { try { const c=getCtx(); tone(900,c.currentTime,0.07,'square',0.06); } catch(e){} },
+    reveal:  function() { try { const c=getCtx(),t=c.currentTime; tone(440,t,0.07,'sine',0.08); tone(660,t+0.08,0.14,'sine',0.11); } catch(e){} },
+    correct: function() { try { const c=getCtx(),t=c.currentTime; tone(523,t,0.14,'sine',0.14); tone(659,t+0.12,0.14,'sine',0.14); tone(784,t+0.24,0.30,'sine',0.16); } catch(e){} },
+    wrong:   function() { try { const c=getCtx(),t=c.currentTime; tone(260,t,0.15,'sawtooth',0.09); tone(200,t+0.14,0.22,'sawtooth',0.07); } catch(e){} },
+    fanfare: function() { try { const c=getCtx(),t=c.currentTime; [523,659,784,1047].forEach(function(f,i){tone(f,t+i*0.11,0.22,'sine',0.14);}); } catch(e){} },
+    copy:    function() { try { const c=getCtx(); tone(1047,c.currentTime,0.12,'sine',0.09); } catch(e){} },
+    message: function() { try { const c=getCtx(),t=c.currentTime; tone(800,t,0.04,'sine',0.07); tone(1000,t+0.05,0.06,'sine',0.07); } catch(e){} },
+  };
+})();
+
+// ─────────────────────────────────────────────
+// SCREEN MANAGEMENT
+// ─────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+}
+
+// ─────────────────────────────────────────────
+// FLASH
+// ─────────────────────────────────────────────
+function flash(color, opacity) {
+  const el = document.getElementById('flash-overlay');
+  el.style.transition = 'none';
+  el.style.background = color;
+  el.style.opacity = String(opacity||0.3);
+  setTimeout(function() { el.style.transition = 'opacity 0.45s ease'; el.style.opacity = '0'; }, 60);
+}
+
+// ─────────────────────────────────────────────
+// COUNT-UP
+// ─────────────────────────────────────────────
+function countUp(elId, target) {
+  const el = document.getElementById(elId); if (!el) return;
+  let n = 0; const step = Math.ceil(target/25);
+  const iv = setInterval(function() {
+    n = Math.min(n + step, target);
+    el.textContent = n;
+    if (n >= target) clearInterval(iv);
+  }, 20);
+}
+
+// ─────────────────────────────────────────────
+// CHAT BRIEF SEQUENCE
+// ─────────────────────────────────────────────
+function startBriefSequence() {
+  const c = C();
+  const container = document.getElementById('chat-messages');
+  container.innerHTML = '';
+
+  function addBubble(text) {
+    const d = document.createElement('div');
+    d.className = 'bubble';
+    d.textContent = text;
+    container.appendChild(d);
+    container.scrollTop = container.scrollHeight;
+    Audio.message();
+  }
+  function showTyping() {
+    const d = document.createElement('div');
+    d.className = 'typing-indicator'; d.id = 'typing';
+    d.innerHTML = '<span></span><span></span><span></span>';
+    container.appendChild(d);
+    container.scrollTop = container.scrollHeight;
+  }
+  function removeTyping() {
+    const t = document.getElementById('typing'); if (t) t.remove();
+  }
+  function addAttachmentChip() {
+    const d = document.createElement('div');
+    d.className = 'attach-chip';
+    d.id = 'attach-chip';
+    d.onclick = expandCaseFile;
+    d.innerHTML = `
+      <div class="attach-icon-box">📁</div>
+      <div class="attach-meta">
+        <div class="attach-name">Case File — Classified</div>
+        <div class="attach-sub">Tap to open</div>
+      </div>
+      <div class="attach-arrow">›</div>
+    `;
+    container.appendChild(d);
+    container.scrollTop = container.scrollHeight;
+    Audio.message();
+  }
+
+  const seq = [
+    { delay: 500,  type: 'typing' },
+    { delay: 1300, type: 'bubble', text: 'Detective. We need your help.' },
+    { delay: 2100, type: 'typing' },
+    { delay: 3400, type: 'bubble', text: c.crime },
+    { delay: 4400, type: 'typing' },
+    { delay: 5300, type: 'bubble', text: c.directorBrief },
+    { delay: 6100, type: 'typing' },
+    { delay: 6900, type: 'chip' },
+  ];
+
+  seq.forEach(function(item) {
+    setTimeout(function() {
+      if (item.type === 'typing') { showTyping(); }
+      else if (item.type === 'bubble') { removeTyping(); addBubble(item.text); }
+      else if (item.type === 'chip')   { removeTyping(); addAttachmentChip(); }
+    }, item.delay);
+  });
+}
+
+function expandCaseFile() {
+  const chip = document.getElementById('attach-chip');
+  if (!chip) return;
+  const c = C();
+  const container = document.getElementById('chat-messages');
+  Audio.click();
+
+  const wrap = document.createElement('div');
+  wrap.className = 'case-file-wrap';
+  wrap.innerHTML = `
+    <div class="artifact-photo">
+      <div class="artifact-emoji">${c.artifact.emoji}</div>
+      <div class="artifact-name">${c.artifact.name}</div>
+      <div class="artifact-desc">${c.artifact.desc}</div>
+    </div>
+    <div class="case-file-body">
+      <div class="case-file-stamp">CASE #${c.number} — CONFIDENTIAL</div>
+      <div class="case-file-title">${c.criminal}</div>
+      <div class="case-file-desc">${c.crime}</div>
+      <div class="case-file-lastseen">Last confirmed sighting: <strong>${c.startingCity}</strong></div>
+      <button class="btn-gonow" onclick="onAcceptCase()">Go Now! →</button>
+    </div>
+  `;
+
+  // Replace chip with expanded file
+  chip.replaceWith(wrap);
+  container.scrollTop = container.scrollHeight;
+}
+
+// ─────────────────────────────────────────────
+// GLOBE  (Three.js)
+// ─────────────────────────────────────────────
+var G = {
+  renderer: null, scene: null, camera: null,
+  earthGroup: null, sphere: null, pinsGroup: null, arcGroup: null,
+  pins: [], pinLabels: [],
+  raf: null, flying: false,
+  targetQuat: null,
+  drag: { active: false, lastX: 0, lastY: 0, totalDist: 0, velX: 0, velY: 0 },
+  initialized: false,
+  userLat: 40.71, userLng: -74.01,   // default NYC, updated by geolocation
+  currentLat: 52.52, currentLng: 13.41,  // current position on globe
+};
+
+function latLngToVec3(lat, lng, r) {
+  r = r !== undefined ? r : 1;
+  var phi   = (90 - lat) * Math.PI / 180;
+  var theta = (lng + 180) * Math.PI / 180;
+  return new THREE.Vector3(
+    -(r * Math.sin(phi) * Math.cos(theta)),
+    r * Math.cos(phi),
+    r * Math.sin(phi) * Math.sin(theta)
+  );
+}
+
+function easeInOut(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
+
+function initGlobe() {
+  var wrap   = document.getElementById('globe-canvas-wrap');
+  var canvas = document.getElementById('globe-canvas');
+  var W = wrap.clientWidth, H = wrap.clientHeight;
+
+  // Renderer
+  G.renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+  G.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  G.renderer.setSize(W, H);
+  G.renderer.setClearColor(0x04040c, 1);
+
+  // Scene + camera
+  G.scene  = new THREE.Scene();
+  G.camera = new THREE.PerspectiveCamera(45, W/H, 0.1, 100);
+  G.camera.position.set(0, 0, 2.6);
+
+  // Lights
+  G.scene.add(new THREE.AmbientLight(0x223355, 2.0));
+  var dir = new THREE.DirectionalLight(0xffeedd, 1.2);
+  dir.position.set(3, 4, 5);
+  G.scene.add(dir);
+
+  // Earth group (everything rotates together)
+  G.earthGroup = new THREE.Group();
+  G.scene.add(G.earthGroup);
+
+  // Sphere
+  var sGeo = new THREE.SphereGeometry(1, 64, 64);
+  var sMat = new THREE.MeshPhongMaterial({ color: 0x08111e, emissive: 0x020508, specular: 0x0a1a30, shininess: 12 });
+  G.sphere = new THREE.Mesh(sGeo, sMat);
+  G.earthGroup.add(G.sphere);
+
+  // Atmosphere glow
+  var atmGeo = new THREE.SphereGeometry(1.1, 32, 32);
+  var atmMat = new THREE.MeshPhongMaterial({ color: 0x0c3080, transparent: true, opacity: 0.08, side: THREE.BackSide });
+  G.earthGroup.add(new THREE.Mesh(atmGeo, atmMat));
+
+  // Graticule
+  G.earthGroup.add(buildGraticule());
+
+  // Pins group + arc group
+  G.pinsGroup = new THREE.Group();
+  G.earthGroup.add(G.pinsGroup);
+  G.arcGroup = new THREE.Group();
+  G.earthGroup.add(G.arcGroup);
+
+  // Country lines (async)
+  fetch('world-110m.json')
+    .then(function(r) { return r.json(); })
+    .then(function(world) {
+      G.earthGroup.add(buildCountryLines(world));
+    });
+
+  // Events
+  canvas.addEventListener('pointerdown', onGlobeDown);
+  canvas.addEventListener('pointermove', onGlobeMove);
+  canvas.addEventListener('pointerup',   onGlobeUp);
+  canvas.addEventListener('pointerleave', onGlobeUp);
+  window.addEventListener('resize', onGlobeResize);
+
+  G.initialized = true;
+  startGlobeLoop();
+}
+
+function buildGraticule() {
+  var pos = [];
+  for (var lat = -60; lat <= 60; lat += 30) {
+    for (var lng = -180; lng < 180; lng += 3) {
+      var v1 = latLngToVec3(lat, lng, 1.001), v2 = latLngToVec3(lat, lng+3, 1.001);
+      pos.push(v1.x,v1.y,v1.z, v2.x,v2.y,v2.z);
+    }
+  }
+  for (var lng2 = -180; lng2 < 180; lng2 += 30) {
+    for (var lat2 = -85; lat2 < 85; lat2 += 3) {
+      var v3 = latLngToVec3(lat2, lng2, 1.001), v4 = latLngToVec3(lat2+3, lng2, 1.001);
+      pos.push(v3.x,v3.y,v3.z, v4.x,v4.y,v4.z);
+    }
+  }
+  var geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  return new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0x152540, transparent: true, opacity: 0.45 }));
+}
+
+function buildCountryLines(world) {
+  var pos = [];
+  var borders = topojson.mesh(world, world.objects.countries);
+  if (borders && borders.coordinates) {
+    borders.coordinates.forEach(function(line) {
+      for (var i = 0; i < line.length - 1; i++) {
+        var v1 = latLngToVec3(line[i][1], line[i][0], 1.002);
+        var v2 = latLngToVec3(line[i+1][1], line[i+1][0], 1.002);
+        pos.push(v1.x,v1.y,v1.z, v2.x,v2.y,v2.z);
+      }
+    });
+  }
+  var geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  return new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0x1a5535, transparent: true, opacity: 0.7 }));
+}
+
+function buildGlobePins() {
+  // Clear
+  while (G.pinsGroup.children.length) G.pinsGroup.remove(G.pinsGroup.children[0]);
+  var labelsEl = document.getElementById('globe-labels');
+  labelsEl.innerHTML = '';
+  G.pinLabels = [];
+
+  leg().options.forEach(function(opt, idx) {
+    var eliminated = S.eliminatedIdxs.includes(idx);
+    var pos    = latLngToVec3(opt.lat, opt.lng, 1);
+    var normal = pos.clone().normalize();
+    var pg     = new THREE.Group();
+    pg.position.copy(pos);
+    pg.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), normal);
+
+    var goldColor = eliminated ? 0xef4444 : 0xe8b84b;
+
+    // Spike
+    var spikeGeo = new THREE.CylinderGeometry(0.005, 0.009, 0.055, 6);
+    var spikeMat = new THREE.MeshPhongMaterial({ color: goldColor, shininess: 60 });
+    var spike    = new THREE.Mesh(spikeGeo, spikeMat);
+    spike.position.y = 0.027;
+    pg.add(spike);
+
+    // Head
+    var headGeo = new THREE.SphereGeometry(0.028, 12, 12);
+    var headMat = new THREE.MeshPhongMaterial({ color: goldColor, emissive: goldColor, emissiveIntensity: eliminated ? 0.1 : 0.3, shininess: 90 });
+    var head    = new THREE.Mesh(headGeo, headMat);
+    head.position.y = 0.068;
+    pg.add(head);
+
+    // Hit sphere (invisible, larger for mobile)
+    var hitGeo  = new THREE.SphereGeometry(0.07, 8, 8);
+    var hitMat  = new THREE.MeshBasicMaterial({ visible: false });
+    var hitMesh = new THREE.Mesh(hitGeo, hitMat);
+    hitMesh.position.y = 0.068;
+    hitMesh.userData  = { cityIdx: idx, cityName: opt.name };
+    pg.add(hitMesh);
+
+    G.pinsGroup.add(pg);
+
+    // DOM label
+    var label = document.createElement('div');
+    label.className = 'globe-label' + (eliminated ? ' elim' : '');
+    label.textContent = opt.name;
+    labelsEl.appendChild(label);
+
+    G.pinLabels.push({ group: pg, head: head, headMat: headMat, label: label, idx: idx, eliminated: eliminated });
+  });
+}
+
+function startGlobeLoop() {
+  if (G.raf) cancelAnimationFrame(G.raf);
+  function loop() {
+    G.raf = requestAnimationFrame(loop);
+
+    // Smooth rotation to target
+    if (G.targetQuat && !G.drag.active) {
+      G.earthGroup.quaternion.slerp(G.targetQuat, 0.055);
+      if (G.earthGroup.quaternion.angleTo(G.targetQuat) < 0.003) {
+        G.earthGroup.quaternion.copy(G.targetQuat);
+        G.targetQuat = null;
+      }
+    }
+
+    // Momentum when not targeting
+    if (!G.targetQuat && !G.drag.active) {
+      if (Math.abs(G.drag.velX) > 0.00005 || Math.abs(G.drag.velY) > 0.00005) {
+        rotateGlobeBy(G.drag.velX * 55, G.drag.velY * 55);
+        G.drag.velX *= 0.92;
+        G.drag.velY *= 0.92;
+      }
+    }
+
+    // Pin pulse
+    var t = Date.now() * 0.002;
+    G.pinLabels.forEach(function(item, i) {
+      if (!item.eliminated) {
+        var pulse = Math.sin(t + i * 1.2) * 0.5 + 0.5;
+        item.headMat.emissiveIntensity = 0.15 + pulse * 0.55;
+        var s = 1 + pulse * 0.18;
+        item.head.scale.setScalar(s);
+      }
+    });
+
+    G.renderer.render(G.scene, G.camera);
+    updatePinLabels();
+  }
+  loop();
+}
+
+function stopGlobeLoop() {
+  if (G.raf) { cancelAnimationFrame(G.raf); G.raf = null; }
+}
+
+function rotateGlobeBy(dx, dy) {
+  var sens = 0.004;
+  var qY = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), dx * sens);
+  var qX = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), dy * sens);
+  G.earthGroup.quaternion.premultiply(qY).premultiply(qX);
+}
+
+function setGlobeTarget(lat, lng) {
+  var pt  = latLngToVec3(lat, lng, 1).normalize();
+  var fwd = new THREE.Vector3(0, 0, 1);
+  G.targetQuat = new THREE.Quaternion().setFromUnitVectors(pt, fwd);
+}
+
+function updatePinLabels() {
+  if (!G.renderer) return;
+  var camPos = G.camera.position.clone().normalize();
+  G.pinLabels.forEach(function(item) {
+    var wp = new THREE.Vector3();
+    item.head.getWorldPosition(wp);
+    var facing = wp.clone().normalize().dot(camPos);
+    if (facing < 0.15) { item.label.style.opacity = '0'; return; }
+    var sp = wp.project(G.camera);
+    var hw = G.renderer.domElement.clientWidth  / 2;
+    var hh = G.renderer.domElement.clientHeight / 2;
+    item.label.style.opacity = String(Math.min(1, (facing - 0.15) * 6));
+    item.label.style.left = (sp.x * hw + hw + 14) + 'px';
+    item.label.style.top  = (-sp.y * hh + hh - 4) + 'px';
+  });
+}
+
+// ── Drag events ───────────────────────────────
+function onGlobeDown(e) {
+  G.drag.active = true;
+  G.drag.lastX = e.clientX; G.drag.lastY = e.clientY;
+  G.drag.totalDist = 0; G.drag.velX = G.drag.velY = 0;
+  G.targetQuat = null;
+  e.preventDefault();
+}
+function onGlobeMove(e) {
+  if (!G.drag.active) return;
+  var dx = e.clientX - G.drag.lastX, dy = e.clientY - G.drag.lastY;
+  G.drag.totalDist += Math.abs(dx) + Math.abs(dy);
+  G.drag.velX = dx / 55; G.drag.velY = dy / 55;
+  G.drag.lastX = e.clientX; G.drag.lastY = e.clientY;
+  rotateGlobeBy(dx, dy);
+}
+function onGlobeUp(e) {
+  if (!G.drag.active) return;
+  G.drag.active = false;
+  if (G.drag.totalDist < 10 && !G.flying) {
+    // Tap → raycast hit spheres
+    var rect = G.renderer.domElement.getBoundingClientRect();
+    var x =  ((e.clientX - rect.left) / rect.width)  * 2 - 1;
+    var y = -((e.clientY - rect.top)  / rect.height) * 2 + 1;
+    var rc = new THREE.Raycaster();
+    rc.setFromCamera(new THREE.Vector2(x, y), G.camera);
+    var hits = [];
+    G.pinsGroup.traverse(function(obj) { if (obj.userData && obj.userData.cityIdx !== undefined) hits.push(obj); });
+    var results = rc.intersectObjects(hits);
+    if (results.length > 0) {
+      var h = results[0].object;
+      if (!S.eliminatedIdxs.includes(h.userData.cityIdx)) {
+        Audio.click();
+        handleCityTap(h.userData.cityName, h.userData.cityIdx);
+      }
+    }
+  }
+}
+function onGlobeResize() {
+  if (!G.renderer) return;
+  var wrap = document.getElementById('globe-canvas-wrap');
+  var W = wrap.clientWidth, H = wrap.clientHeight;
+  G.renderer.setSize(W, H);
+  G.camera.aspect = W / H;
+  G.camera.updateProjectionMatrix();
+}
+
+// ── Flight arc ────────────────────────────────
+function greatCirclePts(lat1, lng1, lat2, lng2, n, radius) {
+  radius = radius || 1.04;
+  var v1  = latLngToVec3(lat1, lng1, 1).normalize();
+  var v2  = latLngToVec3(lat2, lng2, 1).normalize();
+  var dot = Math.min(1, Math.max(-1, v1.dot(v2)));
+  var ang = Math.acos(dot);
+  var pts = [];
+  for (var i = 0; i <= n; i++) {
+    var t = i / n;
+    var v;
+    if (ang < 0.001) {
+      v = v1.clone();
+    } else {
+      var sinA = Math.sin(ang);
+      v = v1.clone().multiplyScalar(Math.sin((1-t)*ang)/sinA)
+           .add(v2.clone().multiplyScalar(Math.sin(t*ang)/sinA));
+    }
+    v.normalize().multiplyScalar(radius + Math.sin(Math.PI * t) * 0.18);
+    pts.push(v);
+  }
+  return pts;
+}
+
+function animateFlight(fromLat, fromLng, toLat, toLng, duration, onDone) {
+  G.flying = true;
+
+  // Clear old arcs
+  while (G.arcGroup.children.length) G.arcGroup.remove(G.arcGroup.children[0]);
+
+  var N   = 80;
+  var pts = greatCirclePts(fromLat, fromLng, toLat, toLng, N);
+
+  // Progressive arc line
+  var arcPositions = new Float32Array((N+1) * 3);
+  var arcGeo = new THREE.BufferGeometry();
+  arcGeo.setAttribute('position', new THREE.BufferAttribute(arcPositions, 3));
+  arcGeo.setDrawRange(0, 1);
+  var arcMat  = new THREE.LineBasicMaterial({ color: 0xe8b84b, transparent: true, opacity: 0.65 });
+  var arcLine = new THREE.Line(arcGeo, arcMat);
+  G.arcGroup.add(arcLine);
+
+  // Flight dot
+  var dotGeo = new THREE.SphereGeometry(0.022, 8, 8);
+  var dotMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  var dot    = new THREE.Mesh(dotGeo, dotMat);
+  G.arcGroup.add(dot);
+
+  // Dot glow
+  var glowGeo = new THREE.SphereGeometry(0.042, 8, 8);
+  var glowMat = new THREE.MeshBasicMaterial({ color: 0xe8b84b, transparent: true, opacity: 0.3 });
+  var glow    = new THREE.Mesh(glowGeo, glowMat);
+  G.arcGroup.add(glow);
+
+  // Rotate globe toward destination
+  setGlobeTarget(toLat, toLng);
+
+  var start = Date.now();
+  function tick() {
+    var elapsed = Date.now() - start;
+    var t = Math.min(elapsed / duration, 1);
+    var idx = Math.min(Math.floor(t * N), N);
+
+    // Reveal arc
+    for (var i = 0; i <= idx; i++) {
+      arcPositions[i*3]   = pts[i].x;
+      arcPositions[i*3+1] = pts[i].y;
+      arcPositions[i*3+2] = pts[i].z;
+    }
+    arcGeo.setDrawRange(0, idx + 1);
+    arcGeo.attributes.position.needsUpdate = true;
+
+    // Move dot
+    var p = pts[Math.min(idx, pts.length-1)];
+    dot.position.copy(p);
+    glow.position.copy(p);
+
+    if (t < 1) {
+      requestAnimationFrame(tick);
+    } else {
+      G.flying = false;
+      // Fade arc out
+      var fadeT = 1.0;
+      var fadeIv = setInterval(function() {
+        fadeT -= 0.1;
+        arcMat.opacity  = Math.max(0, fadeT * 0.65);
+        glowMat.opacity = Math.max(0, fadeT * 0.3);
+        if (fadeT <= 0) {
+          clearInterval(fadeIv);
+          while (G.arcGroup.children.length) G.arcGroup.remove(G.arcGroup.children[0]);
+          if (onDone) onDone();
+        }
+      }, 40);
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+function showGlobeScreen(label, city, sub) {
+  showScreen('globe-screen');
+  if (!G.initialized) initGlobe();
+  else startGlobeLoop();
+
+  // Overlay text
+  document.getElementById('ot-label').textContent = label || 'In transit to';
+  document.getElementById('ot-city').textContent  = city  || '…';
+  document.getElementById('ot-sub').textContent   = sub   || 'Tracking flight path…';
+  var ov = document.getElementById('globe-overlay');
+  ov.style.opacity = '1';
+  ov.classList.remove('fade-out');
+  document.getElementById('globe-hint').style.display = 'none';
+}
+
+function hideOverlay() {
+  var ov = document.getElementById('globe-overlay');
+  ov.classList.add('fade-out');
+  setTimeout(function() { ov.style.display = 'none'; }, 700);
+  document.getElementById('globe-hint').style.display = 'block';
+}
+
+function showGlobeForGuessing() {
+  showScreen('globe-screen');
+  if (!G.initialized) initGlobe();
+  else startGlobeLoop();
+  buildGlobePins();
+  var ov = document.getElementById('globe-overlay');
+  ov.style.display  = 'none';
+  ov.style.opacity  = '0';
+  document.getElementById('globe-hint').style.display = 'block';
+
+  document.getElementById('hud-case').textContent = 'Case #'+C().number+' · Move '+(S.legIdx+1)+' of 4';
+  document.getElementById('hud-target').textContent = 'Where did they go?';
+  document.getElementById('hud-score').textContent = calcScore();
+  var wl = S.witnessIdx===0?'W1 revealed':S.witnessIdx===1?'W1 + W2 revealed':'All 3 witnesses';
+  document.getElementById('hud-witnesses').textContent = wl;
+
+  // Orient to this leg's region
+  var opts = leg().options;
+  var cLat = opts.reduce(function(s,o){ return s+o.lat; },0) / opts.length;
+  var cLng = opts.reduce(function(s,o){ return s+o.lng; },0) / opts.length;
+  setGlobeTarget(cLat, cLng);
+}
+
+function hideGlobeScreen() {
+  stopGlobeLoop();
+}
+
+// ─────────────────────────────────────────────
+// GAME ACTIONS
+// ─────────────────────────────────────────────
+function onAcceptCase() {
+  Audio.click();
+  S.legIdx=0; S.witnessIdx=0; S.wrongGuessesThisLeg=0;
+  S.eliminatedIdxs=[]; S.legScores=[];
+  S.wrongCityName=null; S.wrongCityNope=null; S.correctCityName=null;
+
+  var c = C();
+
+  // Show globe immediately, get geolocation, fly to starting city
+  showGlobeScreen('Deploying to', c.startingCity, 'Tracking your flight path…');
+
+  function doFlight(fromLat, fromLng) {
+    G.currentLat = fromLat;
+    G.currentLng = fromLng;
+    // Orient globe to user location first
+    var pt  = latLngToVec3(fromLat, fromLng, 1).normalize();
+    var fwd = new THREE.Vector3(0, 0, 1);
+    G.earthGroup.quaternion.setFromUnitVectors(pt, fwd);
+
+    setTimeout(function() {
+      hideOverlay();
+      animateFlight(fromLat, fromLng, c.startLat, c.startLng, 2400, function() {
+        G.currentLat = c.startLat;
+        G.currentLng = c.startLng;
+        hideGlobeScreen();
+        S.screen = 'clues';
+        showScreen('card-screen');
+        renderCard();
+      });
+    }, 800);
+  }
+
+  // Try geolocation with 3s timeout
+  if (navigator.geolocation) {
+    var done = false;
+    var timer = setTimeout(function() {
+      if (!done) { done = true; doFlight(G.userLat, G.userLng); }
+    }, 3000);
+    navigator.geolocation.getCurrentPosition(
+      function(pos) {
+        if (!done) {
+          done = true;
+          clearTimeout(timer);
+          G.userLat = pos.coords.latitude;
+          G.userLng = pos.coords.longitude;
+          doFlight(G.userLat, G.userLng);
+        }
+      },
+      function() {
+        if (!done) { done = true; clearTimeout(timer); doFlight(G.userLat, G.userLng); }
+      },
+      { timeout: 2800, maximumAge: 60000 }
+    );
+  } else {
+    doFlight(G.userLat, G.userLng);
+  }
+}
+
+function buyWitness() {
+  if (S.witnessIdx < 2) { Audio.reveal(); S.witnessIdx++; renderCard(); }
+}
+
+function openMap() {
+  Audio.click();
+  showGlobeForGuessing();
+}
+
+function handleCityTap(name, idx) {
+  if (idx === leg().correct) {
+    // CORRECT
+    Audio.correct();
+    flash('rgba(34,197,94,0.2)', 0.5);
+    S.legScores.push(calcScore());
+    S.correctCityName = name;
+
+    var opt = leg().options[idx];
+    G.flying = true;
+    animateFlight(G.currentLat, G.currentLng, opt.lat, opt.lng, 1800, function() {
+      G.currentLat = opt.lat;
+      G.currentLng = opt.lng;
+      hideGlobeScreen();
+      S.screen = 'correct-city';
+      showScreen('card-screen');
+      renderCard();
+    });
+  } else {
+    // WRONG
+    Audio.wrong();
+    flash('rgba(239,68,68,0.3)', 0.6);
+    S.wrongGuessesThisLeg++;
+    var nopeIdx = Math.min(S.wrongGuessesThisLeg - 1, leg().nopeLines.length - 1);
+    S.wrongCityName = name;
+    S.wrongCityNope = leg().nopeLines[nopeIdx];
+    S.eliminatedIdxs.push(idx);
+    // Mark pin red
+    G.pinLabels.forEach(function(item) {
+      if (item.idx === idx) {
+        item.eliminated = true;
+        item.headMat.color.set(0xef4444);
+        item.headMat.emissive.set(0xef4444);
+        item.headMat.emissiveIntensity = 0.1;
+        item.head.scale.setScalar(1);
+        item.label.classList.add('elim');
+      }
+    });
+    setTimeout(function() {
+      hideGlobeScreen();
+      S.screen = 'wrong-city';
+      showScreen('card-screen');
+      renderCard();
+    }, 350);
+  }
+}
+
+function resumePursuit() {
+  Audio.click();
+  showGlobeForGuessing();
+}
+
+function advanceLeg() {
+  Audio.click();
+  if (S.legIdx >= 3) { S.screen='result'; renderCard(); return; }
+
+  var fromLat = G.currentLat, fromLng = G.currentLng;
+  S.legIdx++; S.witnessIdx=0; S.wrongGuessesThisLeg=0;
+  S.eliminatedIdxs=[]; S.correctCityName=null; S.screen='clues';
+
+  // Fly to center of new leg's options
+  var opts = leg().options;
+  var toLat = opts.reduce(function(s,o){ return s+o.lat; },0) / opts.length;
+  var toLng = opts.reduce(function(s,o){ return s+o.lng; },0) / opts.length;
+  var destName = opts[leg().correct].name;
+
+  showGlobeScreen('Flying to', destName + ' area', 'Move '+(S.legIdx+1)+' of 4');
+
+  setTimeout(function() {
+    hideOverlay();
+    animateFlight(fromLat, fromLng, toLat, toLng, 2200, function() {
+      G.currentLat = toLat;
+      G.currentLng = toLng;
+      hideGlobeScreen();
+      showScreen('card-screen');
+      renderCard();
+    });
+  }, 600);
+}
+
+function nextCase() {
+  Audio.click();
+  S.caseIdx = (S.caseIdx + 1) % CASES.length;
+  S.screen = 'brief';
+  showScreen('chat-screen');
+  startBriefSequence();
+}
+
+function copyShareCard() {
+  var text = buildShareText(); Audio.copy();
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(showCopyFeedback);
+  } else {
+    var ta = document.createElement('textarea'); ta.value=text;
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta); showCopyFeedback();
+  }
+}
+function showCopyFeedback() {
+  var el = document.getElementById('copy-feedback');
+  if (el) { el.textContent='✓ Copied!'; setTimeout(function(){el.textContent='';},2000); }
+}
+function buildShareText() {
+  var total = S.legScores.reduce(function(a,b){return a+b;},0);
+  var emojis = S.legScores.map(function(s){ return legEmoji(s)+s; }).join('  ');
+  return '🕵️ Global Pursuit #'+C().number+'\n'+emojis+'\n'+total+' / 400\nglobal-pursuit.app';
+}
+
+// ─────────────────────────────────────────────
+// RENDER — CARD SCREENS
+// ─────────────────────────────────────────────
+function renderCard() {
+  var el = document.getElementById('screen-content');
+  el.className = 'slide-up'; void el.offsetWidth;
+  switch (S.screen) {
+    case 'clues':        el.innerHTML = renderClues();       break;
+    case 'wrong-city':   el.innerHTML = renderWrongCity();   break;
+    case 'correct-city': el.innerHTML = renderCorrectCity(); break;
+    case 'result':       el.innerHTML = renderResult();      break;
+  }
+  if (S.screen === 'correct-city') {
+    var target = S.legScores[S.legScores.length-1];
+    setTimeout(function(){ countUp('score-count', target); }, 80);
+    if (S.legIdx===3) setTimeout(function(){ Audio.fanfare(); }, 400);
+  }
+}
+
+function renderClues() {
+  var l=leg(), c=C(), score=calcScore();
+  var dotsHtml='<div class="progress-dots">';
+  for(var i=0;i<4;i++){
+    var cls='dot';
+    if(i<S.legIdx)cls+=' done'; else if(i===S.legIdx)cls+=' active';
+    dotsHtml+='<div class="'+cls+'"></div>';
+  }
+  dotsHtml+='</div>';
+  var wDotsHtml='<div class="witness-dots">';
+  for(var j=0;j<3;j++) wDotsHtml+='<div class="w-dot'+(j<=S.witnessIdx?' active':'')+'"></div>';
+  wDotsHtml+='</div>';
+  var cluesHtml='';
+  for(var k=0;k<=S.witnessIdx;k++){
+    var w=l.witnesses[k];
+    var clsCls=k===S.witnessIdx?'clue-card clue-new':'clue-card';
+    cluesHtml+='<div class="'+clsCls+'"><div class="clue-who">'+w.who+'</div><div class="clue-text">'+w.clue+'</div></div>';
+  }
+  var canBuy=S.witnessIdx<2;
+  var buyBtn=canBuy
+    ?'<button class="btn btn-ghost" onclick="buyWitness()" style="margin-bottom:10px;">Reveal next witness · −20 pts</button>'
+    :'<div style="text-align:center;font-size:11px;color:var(--dim);padding:6px 0 14px;letter-spacing:0.05em;">ALL WITNESSES REVEALED</div>';
+  var prevCity = S.legIdx===0 ? c.startingCity : C().legs[S.legIdx-1].target;
+  return '<div class="card">'+dotsHtml+'<div class="case-nav"><span class="case-num">Move '+(S.legIdx+1)+' of 4</span><span class="case-criminal">· '+c.criminal+'</span></div><h2>Follow the trail</h2><p class="subtitle" style="margin-bottom:12px;">Where did they go after <strong>'+prevCity+'</strong>?</p><div class="score-display"><div class="score-big">'+score+'</div><div class="score-label">pts<br>available</div></div>'+wDotsHtml+'<div class="score-hint">'+(S.witnessIdx===0?'−20 for each new witness, −25 per wrong guess':'Score decreases with each hint or wrong guess')+'</div></div>'
+    +'<div class="card"><div class="label">Witness Reports</div>'+cluesHtml+'</div>'
+    +buyBtn
+    +'<button class="btn btn-primary" onclick="openMap()">Search the Map →</button>';
+}
+
+function renderWrongCity() {
+  var score=calcScore(), nope=S.wrongCityNope;
+  var remaining = S.eliminatedIdxs.length===1?'3 options remain.':S.eliminatedIdxs.length===2?'2 options remain.':'1 option remains.';
+  return '<div class="card"><span class="badge badge-red">✕ Wrong City — Abort</span><h1 style="font-size:26px;margin-bottom:4px;">✈️ '+S.wrongCityName+'</h1><p class="subtitle">They were not here. The trail goes cold.</p><div class="nope-block"><p>'+nope.line+'</p><div class="attr">— '+nope.who+'</div></div><div class="feedback-pill">−25 pts · Score now <strong>'+score+'</strong></div><hr class="divider"><p class="subtitle" style="font-size:13px;">That city is eliminated. '+remaining+'</p></div>'
+    +'<button class="btn btn-primary" onclick="resumePursuit()">Resume Pursuit →</button>';
+}
+
+function renderCorrectCity() {
+  var isFinal=S.legIdx===3, score=S.legScores[S.legScores.length-1], emoji=legEmoji(score), l=leg();
+  var nextCity=isFinal?null:C().legs[S.legIdx+1].target;
+  var dirQ=isFinal?'Outstanding. They had a twelve-hour head start and you still caught them. Case closed.':'Good call, Agent. Keep moving. Every minute counts.';
+  return '<div class="card"><span class="badge '+(isFinal?'badge-red':'badge-green')+'">'+(isFinal?'🎯 Criminal Apprehended':'✓ Target Confirmed')+'</span><h1>'+l.target+'</h1><p class="subtitle">The trail was right.</p><div class="score-reveal"><span class="number" id="score-count">0</span><span class="emoji">'+emoji+'</span><div class="city-confirm">'+l.target.toUpperCase()+' CONFIRMED</div></div>'+(isFinal?'<div style="text-align:center;margin-bottom:8px;"><span class="capture-stamp">CASE CLOSED</span></div>':'')+'<div class="director-block"><p>'+dirQ+'</p><div class="attr">— Director, Global Pursuit Division</div></div></div>'
+    +'<button class="btn btn-primary" onclick="advanceLeg()">'+(isFinal?'See Final Report →':'Fly to '+nextCity+' →')+'</button>';
+}
+
+function renderResult() {
+  var c=C(), legs=C().legs, total=S.legScores.reduce(function(a,b){return a+b;},0);
+  var rows='';
+  for(var i=0;i<S.legScores.length;i++){
+    var s=S.legScores[i];
+    rows+='<div class="leg-row"><div class="leg-city">Leg '+(i+1)+' · '+legs[i].target+'</div><div class="leg-score-right"><span class="leg-emoji">'+legEmoji(s)+'</span><span class="leg-score-num">'+s+'</span></div></div>';
+  }
+  return '<div class="result-header"><span class="badge badge-gold" style="display:inline-flex;margin-bottom:10px;">🕵️ Case #'+c.number+' Complete</span><h1>Criminal Apprehended</h1><p class="sub">Global Pursuit Division thanks you for your service.</p></div>'
+    +'<div class="card"><div class="label">Case Report — '+c.criminal+'</div>'+rows+'<div class="total-row"><span class="total-label">Total</span><span><span class="total-num">'+total+'</span> <span class="total-max">/ 400</span></span></div></div>'
+    +'<div class="card"><div class="label">Share Your Result</div><div class="share-card" id="share-card-text">'+buildShareText()+'</div><div class="copy-feedback" id="copy-feedback"></div><button class="btn btn-ghost" onclick="copyShareCard()">Copy to Clipboard</button></div>'
+    +'<button class="btn btn-primary" onclick="nextCase()">Next Case →</button>';
+}
+
+// ─────────────────────────────────────────────
+// BOOT
+// ─────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', function() {
+  startBriefSequence();
+});
+</script>
+</body>
+</html>
