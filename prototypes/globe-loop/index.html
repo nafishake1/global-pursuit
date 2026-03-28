@@ -856,7 +856,16 @@ function clearPins() {
 // ────────────────────────────────────────────
 // STAGE VISIBILITY HELPERS
 // ────────────────────────────────────────────
-function showGlobeStage()   { document.getElementById('globe-stage').style.display = 'block'; }
+function showGlobeStage() {
+  var el = document.getElementById('globe-stage');
+  el.style.display = 'block';
+  // Globe was init'd while hidden (0x0) — resize to actual stage dimensions
+  if (World) {
+    requestAnimationFrame(function() {
+      World.width(el.clientWidth).height(el.clientHeight);
+    });
+  }
+}
 function hideGlobeStage()   { document.getElementById('globe-stage').style.display = 'none'; }
 function showWitnessStage() { document.getElementById('witness-stage').classList.add('active'); }
 function hideWitnessStage() { document.getElementById('witness-stage').classList.remove('active'); }
@@ -1047,6 +1056,9 @@ function onAcceptCase() {
   hidePickHint();
   showHUD();
   showFlightOverlay('Deploying to', c.startingCity, 'Flying from New York…');
+
+  // Init globe now that stage is visible and has real dimensions
+  if (!World) { initGlobe(); }
 
   // Point globe at NYC instantly, then arc to starting city
   globeFlyTo(fromLat, fromLng, 2.2, 0);
@@ -1270,15 +1282,12 @@ function nextCase() {
 // BOOT
 // ────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', function() {
-  // Globe stage hidden until game starts
   hideGlobeStage();
   hideHUD();
   hideWitnessStage();
   hideFlightOverlay();
-
-  // Init globe.gl early (loads countries in background)
-  initGlobe();
-
+  // Globe init is deferred until first showGlobeStage() call,
+  // so it measures real dimensions (not 0x0 while hidden)
   startBriefSequence();
 });
 </script>
