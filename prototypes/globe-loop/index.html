@@ -178,56 +178,58 @@
       position: absolute; inset: 0;
       background: linear-gradient(to top, rgba(4,4,12,0.92) 0%, rgba(4,4,12,0.3) 50%, rgba(4,4,12,0.15) 100%);
     }
-    .witness-bottom {
-      position: absolute; bottom: 0; left: 0; right: 0;
-      padding: 0 28px 28px;
-      display: flex; align-items: flex-end; gap: 20px;
+    /* ── Landing panel (city arrival) ─────── */
+    #landing-panel {
+      position: absolute; inset: 0; z-index: 2;
+      display: flex; align-items: flex-end; padding: 0 40px 52px;
     }
-    .witness-card {
-      background: rgba(15,15,28,0.92); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 16px 18px;
-      backdrop-filter: blur(12px); flex: 1;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    .landing-inner { display: flex; flex-direction: column; }
+    .landing-tag { font-size: 11px; font-weight: 800; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; margin-bottom: 6px; }
+    .landing-city { font-size: 56px; font-weight: 900; color: #fff; line-height: 1; text-shadow: 0 2px 24px rgba(0,0,0,0.9); margin-bottom: 6px; }
+    .landing-meta { font-size: 13px; color: rgba(255,255,255,0.45); margin-bottom: 24px; }
+    .btn-get-intel {
+      align-self: flex-start; padding: 15px 28px;
+      background: var(--gold); color: #0d0d14;
+      border: none; border-radius: 10px; font-size: 15px; font-weight: 800;
+      cursor: pointer; letter-spacing: 0.02em;
     }
-    .witness-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-    .witness-avatar {
-      width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
-      background: var(--card); border: 2px solid var(--gold);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 22px;
-    }
-    .witness-meta { flex: 1; }
-    .witness-clue-num { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); }
-    .witness-name { font-size: 13px; font-weight: 700; color: var(--text); margin-top: 1px; }
-    .witness-clue-text { font-size: 14px; color: var(--text); line-height: 1.6; font-style: italic; }
+    .btn-get-intel:active { opacity: 0.85; transform: scale(0.98); }
 
-    .witness-controls {
-      display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; min-width: 140px;
+    /* ── Clue panel (slides up) ────────────── */
+    #clue-panel {
+      position: absolute; bottom: 0; left: 0; right: 0; z-index: 3;
+      transform: translateY(100%);
+      transition: transform 0.42s cubic-bezier(0.16,1,0.3,1);
+      background: rgba(8,8,18,0.96);
+      backdrop-filter: blur(24px);
+      border-top: 1px solid var(--border);
+      padding: 24px 32px 36px;
     }
-    .btn-pick-city {
-      padding: 14px 18px; background: var(--gold); color: #0d0d14;
-      border: none; border-radius: 10px; font-size: 14px; font-weight: 800;
-      cursor: pointer; text-align: center; white-space: nowrap;
+    #clue-panel.open { transform: translateY(0); }
+    .clue-panel-row { display: flex; align-items: flex-start; gap: 24px; }
+    .witness-avatar {
+      width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
+      background: var(--card); border: 2px solid var(--gold);
+      display: flex; align-items: center; justify-content: center; font-size: 26px;
     }
-    .btn-pick-city:active { opacity: 0.85; }
-    .btn-buy-clue {
-      padding: 10px 14px; background: rgba(255,255,255,0.06);
-      border: 1px solid var(--border); border-radius: 10px;
-      font-size: 12px; font-weight: 700; color: var(--muted);
-      cursor: pointer; text-align: center; white-space: nowrap;
+    .clue-panel-body { flex: 1; min-width: 0; }
+    .witness-clue-num { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); margin-bottom: 2px; }
+    .witness-name { font-size: 13px; font-weight: 700; color: var(--muted); margin-bottom: 10px; }
+    .witness-clue-text { font-size: 15px; color: var(--text); line-height: 1.65; font-style: italic; }
+    .clue-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .btn-more-intel {
+      flex: 1; padding: 13px 16px;
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: 10px; font-size: 13px; font-weight: 700; color: var(--muted); cursor: pointer;
     }
-    .btn-buy-clue:hover { border-color: var(--gold); color: var(--gold); }
-    .btn-buy-clue:disabled, .btn-buy-clue.used { opacity: 0.35; cursor: default; pointer-events: none; }
-    .clue-tabs {
-      display: flex; gap: 6px; margin-bottom: 12px;
+    .btn-more-intel:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
+    .btn-more-intel:disabled { opacity: 0.3; cursor: default; }
+    .btn-travel {
+      flex: 1; padding: 13px 16px;
+      background: var(--gold); color: #0d0d14;
+      border: none; border-radius: 10px; font-size: 14px; font-weight: 800; cursor: pointer;
     }
-    .clue-tab {
-      font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
-      padding: 4px 10px; border-radius: 20px; cursor: pointer;
-      border: 1px solid var(--border); color: var(--dim); background: transparent;
-    }
-    .clue-tab.active { background: var(--gold); color: #0d0d14; border-color: var(--gold); }
-    .clue-tab.locked { opacity: 0.35; cursor: not-allowed; }
+    .btn-travel:active { opacity: 0.85; }
 
     /* Stage HUD */
     #stage-hud {
@@ -394,22 +396,29 @@
     <!-- Witness / Street View stage -->
     <div id="witness-stage">
       <div class="witness-photo-overlay"></div>
-      <div class="witness-bottom">
-        <div class="witness-card">
-          <div class="clue-tabs" id="clue-tabs"></div>
-          <div class="witness-header">
-            <div class="witness-avatar" id="witness-avatar">👁</div>
-            <div class="witness-meta">
-              <div class="witness-clue-num" id="witness-clue-num">CLUE 1 · FREE</div>
-              <div class="witness-name" id="witness-name">Witness</div>
+      <!-- Landing panel: city arrival moment -->
+      <div id="landing-panel">
+        <div class="landing-inner">
+          <div class="landing-tag">YOU'RE IN</div>
+          <div class="landing-city" id="landing-city-name">Berlin</div>
+          <div class="landing-meta" id="landing-meta">Case #1 · Move 1 of 4</div>
+          <button class="btn-get-intel" onclick="getFirstClue()">Talk to witnesses →</button>
+        </div>
+      </div>
+
+      <!-- Clue panel: slides up from bottom -->
+      <div id="clue-panel">
+        <div class="clue-panel-row">
+          <div class="witness-avatar" id="witness-avatar">👁</div>
+          <div class="clue-panel-body">
+            <div class="witness-clue-num" id="witness-clue-num">CLUE 1 · FREE</div>
+            <div class="witness-name" id="witness-name">Witness</div>
+            <div class="witness-clue-text" id="witness-clue-text"></div>
+            <div class="clue-actions">
+              <button class="btn-more-intel" id="btn-more-intel" onclick="buyWitness()">More intel · −20 pts</button>
+              <button class="btn-travel" onclick="openMap()">Travel →</button>
             </div>
           </div>
-          <div class="witness-clue-text" id="witness-clue-text"></div>
-        </div>
-        <div class="witness-controls">
-          <button class="btn-pick-city" onclick="openMap()">Pick City →</button>
-          <button class="btn-buy-clue" id="btn-clue2" onclick="buyWitness()">Clue #2 · −20 pts</button>
-          <button class="btn-buy-clue" id="btn-clue3" id="btn-clue3" onclick="buyWitness()">Clue #3 · −20 pts</button>
         </div>
       </div>
     </div>
@@ -902,14 +911,15 @@ function hideStageOverlay() {
 // ────────────────────────────────────────────
 // WITNESS STAGE
 // ────────────────────────────────────────────
-function renderWitnessStage() {
-  var l  = leg();
-  var ws = l.witnesses[S.activeClueTab];
-
-  // Street photo — show current city (where detective IS), not the target
+function showCityLanding() {
   var city = S.currentCity || C().startingCity;
+  document.getElementById('landing-city-name').textContent = city;
+  document.getElementById('landing-meta').textContent = 'Case #' + C().number + ' · Move ' + (S.legIdx+1) + ' of 4';
+  document.getElementById('landing-panel').style.display = 'flex';
+  document.getElementById('clue-panel').classList.remove('open');
+
+  // Wiki photo background
   var stage = document.getElementById('witness-stage');
-  // Dark fallback while photo loads
   stage.style.backgroundImage = 'none';
   stage.style.background = 'linear-gradient(160deg,#070b18 0%,#0d1a2e 100%)';
   fetchWikiPhoto(city, function(url) {
@@ -919,38 +929,27 @@ function renderWitnessStage() {
     }
   });
 
-  // Tabs
-  var tabsHtml = '';
-  for (var i = 0; i <= S.witnessIdx; i++) {
-    var active = i === S.activeClueTab ? ' active' : '';
-    tabsHtml += '<button class="clue-tab' + active + '" onclick="switchClueTab(' + i + ')">Clue ' + (i+1) + '</button>';
-  }
-  document.getElementById('clue-tabs').innerHTML = tabsHtml;
-
-  // Witness info
-  document.getElementById('witness-avatar').textContent    = WITNESS_AVATARS[ws.who] || '👁';
-  document.getElementById('witness-clue-num').textContent  = 'CLUE ' + (S.activeClueTab+1) + (S.activeClueTab===0?' · FREE':' · −20 pts');
-  document.getElementById('witness-name').textContent      = ws.who;
-  document.getElementById('witness-clue-text').textContent = ws.clue;
-
-  // Buy buttons
-  var btn2 = document.getElementById('btn-clue2');
-  var btn3 = document.getElementById('btn-clue3');
-  if (S.witnessIdx >= 1) { btn2.classList.add('used'); btn2.textContent = '✓ Clue #2 revealed'; }
-  else                    { btn2.classList.remove('used'); btn2.textContent = 'Clue #2 · −20 pts'; }
-  if (S.witnessIdx >= 2) { btn3.classList.add('used'); btn3.textContent = '✓ Clue #3 revealed'; }
-  else                    { btn3.classList.remove('used'); btn3.textContent = 'Clue #3 · −20 pts'; }
-  btn2.disabled = (S.witnessIdx >= 1);
-  btn3.disabled = (S.witnessIdx < 1 || S.witnessIdx >= 2);
-
   showWitnessStage();
   showHUD();
   updateHUD();
 }
 
-function switchClueTab(idx) {
-  S.activeClueTab = idx;
-  renderWitnessStage();
+function getFirstClue() {
+  Audio.reveal();
+  document.getElementById('landing-panel').style.display = 'none';
+  document.getElementById('clue-panel').classList.add('open');
+  updateCluePanel();
+}
+
+function updateCluePanel() {
+  var ws = leg().witnesses[S.witnessIdx];
+  document.getElementById('witness-avatar').textContent    = WITNESS_AVATARS[ws.who] || '👁';
+  document.getElementById('witness-clue-num').textContent  = 'CLUE ' + (S.witnessIdx+1) + (S.witnessIdx===0 ? ' · FREE' : ' · −20 pts');
+  document.getElementById('witness-name').textContent      = ws.who;
+  document.getElementById('witness-clue-text').textContent = ws.clue;
+  var btn = document.getElementById('btn-more-intel');
+  btn.disabled = (S.witnessIdx >= 2);
+  btn.textContent = S.witnessIdx >= 2 ? 'All intel revealed' : 'More intel · −20 pts';
 }
 
 // ────────────────────────────────────────────
@@ -1073,7 +1072,7 @@ function onAcceptCase() {
       S.currentLat = c.startLat; S.currentLng = c.startLng;
       clearPins();
       S.activeClueTab = 0;
-      renderWitnessStage();
+      showCityLanding();
       updateHUD();
     }, 3000);
   }, 900);
@@ -1083,8 +1082,7 @@ function buyWitness() {
   if (S.witnessIdx < 2) {
     Audio.reveal();
     S.witnessIdx++;
-    S.activeClueTab = S.witnessIdx;
-    renderWitnessStage();
+    updateCluePanel();
     updateHUD();
   }
 }
@@ -1220,7 +1218,7 @@ function advanceLeg() {
     setTimeout(function() {
       clearArcs();
       S.currentLat = toLat; S.currentLng = toLng;
-      renderWitnessStage();
+      showCityLanding();
       updateHUD();
     }, 2600);
   }, 500);
