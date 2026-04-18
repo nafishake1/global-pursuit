@@ -171,13 +171,24 @@
     #witness-stage {
       position: absolute; inset: 0;
       display: none;
+      background-color: #070b18;
       background-size: cover; background-position: center;
     }
     #witness-stage.active { display: flex; flex-direction: column; }
     .witness-photo-overlay {
-      position: absolute; inset: 0;
-      background: linear-gradient(to top, rgba(4,4,12,0.92) 0%, rgba(4,4,12,0.3) 50%, rgba(4,4,12,0.15) 100%);
+      position: absolute; inset: 0; z-index: 1;
+      background: linear-gradient(to top, rgba(4,4,12,0.88) 0%, rgba(4,4,12,0.15) 45%, rgba(4,4,12,0.05) 100%);
+      pointer-events: none;
     }
+    #sv-container {
+      position: absolute; inset: 0; z-index: 0;
+      opacity: 0; transition: opacity 0.9s ease;
+      background: #070b18;
+    }
+    #sv-container.loaded { opacity: 1; }
+    /* Make mapillary-js viewer fill its container */
+    #sv-container > div { width: 100% !important; height: 100% !important; }
+    #sv-container { pointer-events: none; }
     /* ── Landing panel (city arrival) ─────── */
     #landing-panel {
       position: absolute; inset: 0; z-index: 2;
@@ -321,6 +332,54 @@
     .feedback-pill { display: inline-block; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); border-radius: 8px; padding: 7px 13px; font-size: 13px; color: var(--red); margin: 10px 0 14px; }
     .divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
 
+    /* ── Correct city flash ─────────────────── */
+    #correct-flash {
+      position: absolute; inset: 0; z-index: 60;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: rgba(4,4,12,0.72); backdrop-filter: blur(3px);
+      pointer-events: none; opacity: 0;
+      transition: opacity 0.32s ease;
+    }
+    #correct-flash.show { opacity: 1; pointer-events: auto; }
+    .cf-pin {
+      font-size: 100px; line-height: 1; display: block;
+      filter: drop-shadow(0 0 36px rgba(232,184,75,0.75));
+      transform: translateY(-220px) scale(1.5);
+    }
+    #correct-flash.show .cf-pin {
+      animation: cfPinDrop 0.52s cubic-bezier(0.34,1.5,0.64,1) forwards;
+    }
+    @keyframes cfPinDrop {
+      0%   { transform: translateY(-220px) scale(1.5); }
+      68%  { transform: translateY(10px) scale(0.94); }
+      82%  { transform: translateY(-12px) scale(1.04); }
+      100% { transform: translateY(0) scale(1); }
+    }
+    .cf-label {
+      margin-top: 20px;
+      background: var(--gold); color: #0d0d14;
+      padding: 11px 36px; border-radius: 9px;
+      font-size: 30px; font-weight: 900; letter-spacing: 0.07em; text-transform: uppercase;
+      box-shadow: 0 6px 40px rgba(232,184,75,0.45);
+      transform: scale(0); opacity: 0;
+    }
+    #correct-flash.show .cf-label {
+      animation: cfLabelPop 0.36s cubic-bezier(0.34,1.65,0.64,1) 0.40s forwards;
+    }
+    @keyframes cfLabelPop {
+      from { transform: scale(0);    opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+    .cf-sub {
+      margin-top: 11px; font-size: 11px; font-weight: 800;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: rgba(255,255,255,0.45); opacity: 0;
+    }
+    #correct-flash.show .cf-sub {
+      animation: cfSubFade 0.28s ease 0.65s forwards;
+    }
+    @keyframes cfSubFade { from { opacity:0; } to { opacity:1; } }
+
     /* Map hint */
     #pick-hint {
       position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
@@ -365,6 +424,8 @@
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   </style>
+  <!-- MAPILLARY — commented out, replaced by Google Street View. Kept for reference. -->
+  <!-- <link rel="stylesheet" href="https://unpkg.com/mapillary-js@4.1.2/dist/mapillary.css"> -->
 </head>
 <body>
 <div id="flash-overlay"></div>
@@ -395,6 +456,7 @@
 
     <!-- Witness / Street View stage -->
     <div id="witness-stage">
+      <div id="sv-container"></div>
       <div class="witness-photo-overlay"></div>
       <!-- Landing panel: city arrival moment -->
       <div id="landing-panel">
@@ -448,6 +510,13 @@
     <!-- Pick city hint -->
     <div id="pick-hint">Tap a city to make your guess</div>
 
+    <!-- Correct city pin-drop flash -->
+    <div id="correct-flash">
+      <div class="cf-pin">📍</div>
+      <div class="cf-label" id="cf-city-name">Tokyo</div>
+      <div class="cf-sub">Location Confirmed</div>
+    </div>
+
     <!-- Result / wrong / correct overlays -->
     <div id="stage-overlay">
       <div class="overlay-inner" id="overlay-content"></div>
@@ -458,31 +527,296 @@
 
 <script src="topojson.min.js"></script>
 <script src="https://unpkg.com/globe.gl@2/dist/globe.gl.min.js"></script>
+<!-- Google Maps JavaScript API (provides google.maps.StreetViewService + StreetViewPanorama).
+     Key is restricted to localhost referrers in Google Cloud Console — do not reuse elsewhere without rescoping. -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDK4CfZ1Te4zwpPQhu8i23ZQPoHZoCEPRg&v=weekly"></script>
+<!-- MAPILLARY — commented out, replaced by Google Street View. Kept for reference. -->
+<!-- <script src="https://unpkg.com/mapillary-js@4.1.2/dist/mapillary.js"></script> -->
 <script>
 
 // ────────────────────────────────────────────
 // DATA
 // ────────────────────────────────────────────
-// Wikipedia city name overrides (where article title differs from game name)
+// Curated city photos — direct Wikimedia Commons URLs (verified via pageimages API)
+var CITY_PHOTOS = {
+  'Berlin':        'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Blue_Hour_in_Berlin.jpg/1280px-Blue_Hour_in_Berlin.jpg',
+  'Paris':         'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/La_Tour_Eiffel_vue_de_la_Tour_Saint-Jacques%2C_Paris_ao%C3%BBt_2014_%282%29.jpg/1280px-La_Tour_Eiffel_vue_de_la_Tour_Saint-Jacques%2C_Paris_ao%C3%BBt_2014_%282%29.jpg',
+  'Tokyo':         'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Skyscrapers_of_Shinjuku_2009_January.jpg/1280px-Skyscrapers_of_Shinjuku_2009_January.jpg',
+  'Seoul':         'https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/%EC%A4%91%ED%99%94%EC%A0%84%EC%9D%98_%EB%82%AE.jpg/1280px-%EC%A4%91%ED%99%94%EC%A0%84%EC%9D%98_%EB%82%AE.jpg',
+  'Shanghai':      'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Huangpu_Park_20124-Shanghai_%2832208802494%29.jpg/1280px-Huangpu_Park_20124-Shanghai_%2832208802494%29.jpg',
+  'Beijing':       'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Skyline_of_Beijing_CBD_from_the_southeast_%2820210907094201%29.jpg/1280px-Skyline_of_Beijing_CBD_from_the_southeast_%2820210907094201%29.jpg',
+  'Sydney':        'https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Sydney_Opera_House_and_Harbour_Bridge_Dusk_%282%29_2019-06-21.jpg/1280px-Sydney_Opera_House_and_Harbour_Bridge_Dusk_%282%29_2019-06-21.jpg',
+  'Melbourne':     'https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Melburnian_Skyline.jpg/1280px-Melburnian_Skyline.jpg',
+  'Auckland':      'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Auckland_skyline_-_May_2024_%282%29.jpg/1280px-Auckland_skyline_-_May_2024_%282%29.jpg',
+  'Cape Town':     'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Camps_bay_%2853460319478%29_%28cropped%29.jpg/1280px-Camps_bay_%2853460319478%29_%28cropped%29.jpg',
+  'Cairo':         'https://upload.wikimedia.org/wikipedia/commons/c/ca/Cairo_Skyline_%282020%29.jpg',
+  'Nairobi':       'https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Nairobi_skyline_from_Gem_Hotel.jpg/1280px-Nairobi_skyline_from_Gem_Hotel.jpg',
+  'Casablanca':    'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Casa_finance_city_6_%28cropped%29.jpg/1280px-Casa_finance_city_6_%28cropped%29.jpg',
+  'Johannesburg':  'https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Johannesburg_skyline_2017.jpg/1280px-Johannesburg_skyline_2017.jpg',
+  'Rio de Janeiro':'https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Cidade_Maravilhosa.jpg/1280px-Cidade_Maravilhosa.jpg',
+  'São Paulo':     'https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Marginal_Pinheiros_e_Jockey_Club.jpg/1280px-Marginal_Pinheiros_e_Jockey_Club.jpg',
+  'Buenos Aires':  'https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Puerto_Madero%2C_Buenos_Aires_%2826860888698%29_%28cropped%29.jpg/1280px-Puerto_Madero%2C_Buenos_Aires_%2826860888698%29_%28cropped%29.jpg',
+  'Lima':          'https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Sanisidroskyscrapers.jpg/1280px-Sanisidroskyscrapers.jpg',
+  'New York':      'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/View_of_Empire_State_Building_from_Rockefeller_Center_New_York_City_dllu_%28cropped%29.jpg/1280px-View_of_Empire_State_Building_from_Rockefeller_Center_New_York_City_dllu_%28cropped%29.jpg',
+  'London':        'https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/London_Skyline_%28125508655%29.jpeg/1280px-London_Skyline_%28125508655%29.jpeg',
+  'Chicago':       'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Chicago_River_ferry_b.jpg/1280px-Chicago_River_ferry_b.jpg',
+  'Los Angeles':   'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Hollywood_Sign_%28Zuschnitt%29.jpg/1280px-Hollywood_Sign_%28Zuschnitt%29.jpg',
+  'Dubai':         'https://upload.wikimedia.org/wikipedia/en/thumb/c/c7/Burj_Khalifa_2021.jpg/1280px-Burj_Khalifa_2021.jpg',
+  'Abu Dhabi':     'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Abu_dhabi_skylines_2014.jpg/1280px-Abu_dhabi_skylines_2014.jpg',
+  'Doha':          'https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/The_Pearl_Marina_in_Nov_2013.jpg/1280px-The_Pearl_Marina_in_Nov_2013.jpg',
+  'Riyadh':        'https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Riyadh_Skyline.jpg/1280px-Riyadh_Skyline.jpg',
+  'Bangkok':       'https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Wat_Benjamabophit1.jpg/1280px-Wat_Benjamabophit1.jpg',
+  'Singapore':     'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Marina_Bay_Sands_%28I%29.jpg/1280px-Marina_Bay_Sands_%28I%29.jpg',
+  'Kuala Lumpur':  'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Bukit_Bintang_junction_in_2024_2.jpg/1280px-Bukit_Bintang_junction_in_2024_2.jpg',
+  'Ho Chi Minh':   'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Ho_Chi_Minh_City_panorama_2019_%28cropped2%29.jpg/1280px-Ho_Chi_Minh_City_panorama_2019_%28cropped2%29.jpg',
+  'Istanbul':      'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Historical_peninsula_and_modern_skyline_of_Istanbul.jpg/1280px-Historical_peninsula_and_modern_skyline_of_Istanbul.jpg',
+  'Athens':        'https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Monastiraki_Square_and_Acropolis_in_Athens_%2844149181684%29.jpg/1280px-Monastiraki_Square_and_Acropolis_in_Athens_%2844149181684%29.jpg',
+  'Rome':          'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Trevi_Fountain%2C_Rome%2C_Italy_2_-_May_2007.jpg/1280px-Trevi_Fountain%2C_Rome%2C_Italy_2_-_May_2007.jpg',
+};
+
+// ── Street view via Google Maps Platform ───────────────────────
+// Interactive StreetViewPanorama rendered into #sv-container as an ambient backdrop
+// behind the witness scrim. Falls back to curated Wikipedia photo (CITY_PHOTOS) if
+// Google has no outdoor coverage within 5km of the city coords.
+var _svCache    = {};   // cityName → panoId | null
+var _svPanorama = null; // singleton google.maps.StreetViewPanorama
+var _svService  = null; // singleton google.maps.StreetViewService
+
+// Iconic landmark vantage points — coords hand-picked for Street View recognizability.
+// When a city has an entry here, loadStreetView uses these coords (with preference: BEST)
+// instead of the city-center coords passed in, and frames the camera via `heading`.
+// Cities not in this table fall back to default city-center search.
+// heading: compass bearing the camera points (0=N, 90=E, 180=S, 270=W).
+var CITY_LANDMARKS = {
+  'Berlin':         { lat:  52.5163, lng:  13.3780, heading:  90, landmark: 'Brandenburg Gate' },
+  'Paris':          { lat:  48.8616, lng:   2.2889, heading: 180, landmark: 'Trocadéro → Eiffel Tower' },
+  'Tokyo':          { lat:  35.6593, lng: 139.7005, heading:   0, landmark: 'Shibuya Scramble Crossing' },
+  'Seoul':          { lat:  37.5758, lng: 126.9770, heading:   0, landmark: 'Gwanghwamun Gate' },
+  'Shanghai':       { lat:  31.2366, lng: 121.4856, heading:  90, landmark: 'The Bund → Pudong' },
+  'Beijing':        { lat:  39.9020, lng: 116.3883, heading:   0, landmark: 'Tiananmen Square' },
+  'Sydney':         { lat: -33.8568, lng: 151.2153, heading: 270, landmark: 'Circular Quay → Opera House' },
+  'Melbourne':      { lat: -37.8181, lng: 144.9668, heading:   0, landmark: 'Flinders Street Station' },
+  'Auckland':       { lat: -36.8412, lng: 174.7682, heading:  90, landmark: 'Queens Wharf → Sky Tower' },
+  'Cape Town':      { lat: -33.9080, lng:  18.4203, heading:   0, landmark: 'V&A Waterfront → Table Mtn' },
+  'Cairo':          { lat:  29.9792, lng:  31.1342, heading: 180, landmark: 'Pyramids of Giza' },
+  'Nairobi':        { lat:  -1.2864, lng:  36.8167, heading:   0, landmark: 'Kenyatta Avenue CBD' },
+  'Casablanca':     { lat:  33.6086, lng:  -7.6326, heading: 180, landmark: 'Hassan II Mosque' },
+  'Johannesburg':   { lat: -26.1074, lng:  28.0546, heading:   0, landmark: 'Nelson Mandela Square' },
+  'Rio de Janeiro': { lat: -22.9707, lng: -43.1824, heading:  90, landmark: 'Copacabana Beach' },
+  'São Paulo':      { lat: -23.5567, lng: -46.6535, heading:   0, landmark: 'MASP / Av. Paulista' },
+  'Buenos Aires':   { lat: -34.6081, lng: -58.3703, heading:  90, landmark: 'Casa Rosada / Plaza de Mayo' },
+  'Lima':           { lat: -12.0467, lng: -77.0297, heading:   0, landmark: 'Plaza Mayor' },
+  'New York':       { lat:  40.7580, lng: -73.9855, heading:   0, landmark: 'Times Square' },
+  'London':         { lat:  51.5007, lng:  -0.1246, heading: 270, landmark: 'Westminster Bridge → Big Ben' },
+  'Chicago':        { lat:  41.8826, lng: -87.6235, heading:   0, landmark: 'Millennium Park / The Bean' },
+  'Los Angeles':    { lat:  34.1012, lng:-118.3379, heading:   0, landmark: 'TCL Chinese Theatre / Walk of Fame' },
+  'Dubai':          { lat:  25.1975, lng:  55.2743, heading:   0, landmark: 'Burj Khalifa base' },
+  'Abu Dhabi':      { lat:  24.4128, lng:  54.4749, heading: 270, landmark: 'Sheikh Zayed Grand Mosque' },
+  'Doha':           { lat:  25.2882, lng:  51.5357, heading:  90, landmark: 'Corniche → West Bay' },
+  'Riyadh':         { lat:  24.7122, lng:  46.6755, heading:   0, landmark: 'Kingdom Centre' },
+  'Bangkok':        { lat:  13.7420, lng: 100.4920, heading: 270, landmark: 'Tha Tien pier → Wat Arun' },
+  'Singapore':      { lat:   1.2823, lng: 103.8585, heading:  90, landmark: 'Marina Bay Sands waterfront' },
+  'Kuala Lumpur':   { lat:   3.1578, lng: 101.7117, heading:   0, landmark: 'Petronas Towers / KLCC' },
+  'Ho Chi Minh':    { lat:  10.7933, lng: 106.6983, heading:   0, landmark: 'Notre-Dame Basilica' },
+  'Istanbul':       { lat:  41.0086, lng:  28.9802, heading: 270, landmark: 'Sultanahmet / Hagia Sophia' },
+  'Athens':         { lat:  37.9715, lng:  23.7262, heading: 315, landmark: 'Monastiraki → Acropolis' },
+  'Rome':           { lat:  41.8902, lng:  12.4922, heading:   0, landmark: 'Colosseum' }
+};
+
+// Pre-warm: fetch + cache the pano ID during flight, but don't render yet.
+function prefetchStreetView(lat, lng, cityName) {
+  if (typeof google === 'undefined' || !google.maps || !google.maps.StreetViewService) return;
+  if (_svCache[cityName] !== undefined) return; // already cached
+
+  if (!_svService) _svService = new google.maps.StreetViewService();
+  var landmark  = CITY_LANDMARKS[cityName];
+  var searchLat = landmark ? landmark.lat : lat;
+  var searchLng = landmark ? landmark.lng : lng;
+  var preference = landmark
+    ? google.maps.StreetViewPreference.BEST
+    : google.maps.StreetViewPreference.NEAREST;
+
+  var radii = landmark ? [100, 500, 2000] : [200, 1000, 5000];
+  function _search(idx) {
+    if (idx >= radii.length) { _svCache[cityName] = null; return; }
+    _svService.getPanorama({
+      location: { lat: searchLat, lng: searchLng },
+      radius:   radii[idx],
+      source:   google.maps.StreetViewSource.OUTDOOR,
+      preference: preference
+    }, function(data, status) {
+      console.log('[GSV prefetch] radius='+radii[idx]+'m for', cityName, '->', status);
+      if (status === google.maps.StreetViewStatus.OK && data && data.location) {
+        _svCache[cityName] = data.location.pano;
+      } else {
+        _search(idx + 1);
+      }
+    });
+  }
+  _search(0);
+}
+
+// Render: call only when #witness-stage is visible. Uses cached pano ID if available,
+// otherwise fetches it first then renders.
+function loadStreetView(lat, lng, cityName) {
+  var container = document.getElementById('sv-container');
+  container.classList.remove('loaded');
+
+  if (typeof google === 'undefined' || !google.maps || !google.maps.StreetViewService) {
+    console.log('[GSV] google.maps not ready; using photo fallback for', cityName);
+    _renderSVImage(null, cityName);
+    return;
+  }
+
+  // Cache hit — render immediately
+  if (_svCache[cityName] !== undefined) {
+    _renderSVImage(_svCache[cityName], cityName);
+    return;
+  }
+
+  // Cache miss — fetch then render
+  if (!_svService) _svService = new google.maps.StreetViewService();
+  var landmark  = CITY_LANDMARKS[cityName];
+  var searchLat = landmark ? landmark.lat : lat;
+  var searchLng = landmark ? landmark.lng : lng;
+  var preference = landmark
+    ? google.maps.StreetViewPreference.BEST
+    : google.maps.StreetViewPreference.NEAREST;
+
+  var radii = landmark ? [100, 500, 2000] : [200, 1000, 5000];
+  function _search(idx) {
+    if (idx >= radii.length) {
+      console.log('[GSV] no outdoor imagery for', cityName);
+      _svCache[cityName] = null;
+      _renderSVImage(null, cityName);
+      return;
+    }
+    _svService.getPanorama({
+      location: { lat: searchLat, lng: searchLng },
+      radius:   radii[idx],
+      source:   google.maps.StreetViewSource.OUTDOOR,
+      preference: preference
+    }, function(data, status) {
+      console.log('[GSV] radius='+radii[idx]+'m for', cityName, '->', status);
+      if (status === google.maps.StreetViewStatus.OK && data && data.location) {
+        _svCache[cityName] = data.location.pano;
+        _renderSVImage(_svCache[cityName], cityName);
+      } else {
+        _search(idx + 1);
+      }
+    });
+  }
+  _search(0);
+}
+
+function _renderSVImage(panoId, cityName) {
+  var container = document.getElementById('sv-container');
+  var stage     = document.getElementById('witness-stage');
+
+  if (!panoId) {
+    container.style.display = 'none';
+    if (CITY_PHOTOS[cityName]) {
+      stage.style.backgroundImage = 'url(' + CITY_PHOTOS[cityName] + ')';
+    }
+    return;
+  }
+
+  container.style.display = 'block';
+  stage.style.backgroundImage = '';
+
+  var landmark = CITY_LANDMARKS[cityName];
+  var pov = landmark ? { heading: landmark.heading, pitch: 0 } : null;
+
+  if (!_svPanorama) {
+    var opts = {
+      disableDefaultUI:      true,
+      addressControl:        false,
+      linksControl:          false,
+      panControl:            false,
+      zoomControl:           false,
+      fullscreenControl:     false,
+      motionTracking:        false,
+      motionTrackingControl: false,
+      showRoadLabels:        false,
+      clickToGo:             false,
+      scrollwheel:           false,
+      zoom:                  0
+    };
+    if (pov) opts.pov = pov;
+    _svPanorama = new google.maps.StreetViewPanorama(container, opts);
+    google.maps.event.addListenerOnce(_svPanorama, 'tiles_loaded', function() {
+      container.classList.add('loaded');
+    });
+    _svPanorama.setPano(panoId);
+  } else {
+    if (pov) _svPanorama.setPov(pov);
+    google.maps.event.addListenerOnce(_svPanorama, 'tiles_loaded', function() {
+      container.classList.add('loaded');
+    });
+    _svPanorama.setPano(panoId);
+  }
+  google.maps.event.trigger(_svPanorama, 'resize');
+}
+
+/* ──────────────────────────────────────────────────────────────
+   MAPILLARY — commented out, replaced by Google Street View above.
+   Kept for reference in case we swap back.
+
+var MAPILLARY_TOKEN = localStorage.getItem('mly_user_token') || 'MLY|25560966663577439|0094d9d8a1771cb2bc0584ac9668fa32';
+var MAPILLARY_CLIENT_ID = '25560966663577439';
+// var _svCache   = {};   // cityName → imageId | null   (name reused by GSV impl above)
+// var _svViewer  = null; // singleton mapillary-js Viewer
+
+function loadStreetView_mapillary(lat, lng, cityName) {
+  document.getElementById('sv-container').classList.remove('loaded');
+  if (_svCache[cityName] !== undefined) { _renderSVImage_mapillary(_svCache[cityName], cityName); return; }
+  var deltas = [0.01, 0.05, 0.15]; // 0.01°≈1km, 0.05°≈5km, 0.15°≈15km
+  function _mlySearch(idx) {
+    if (idx >= deltas.length) { _svCache[cityName] = null; _renderSVImage_mapillary(null, cityName); return; }
+    var d = deltas[idx];
+    var url = 'https://graph.mapillary.com/images?fields=id&bbox=' +
+      (lng-d)+','+(lat-d)+','+(lng+d)+','+(lat+d) + '&limit=1';
+    fetch(url, { headers: { 'Authorization': 'OAuth ' + MAPILLARY_TOKEN } })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        var id = res.data && res.data[0] && res.data[0].id || null;
+        if (id) { _svCache[cityName] = id; _renderSVImage_mapillary(id, cityName); }
+        else { _mlySearch(idx + 1); }
+      })
+      .catch(function() { _mlySearch(idx + 1); });
+  }
+  _mlySearch(0);
+}
+
+function _renderSVImage_mapillary(imageId, cityName) {
+  var container = document.getElementById('sv-container');
+  var stage     = document.getElementById('witness-stage');
+  if (!imageId) {
+    container.style.display = 'none';
+    if (CITY_PHOTOS[cityName]) stage.style.backgroundImage = 'url(' + CITY_PHOTOS[cityName] + ')';
+    return;
+  }
+  container.style.display = 'block';
+  stage.style.backgroundImage = '';
+  if (!_svViewer) {
+    _svViewer = new mapillary.Viewer({
+      accessToken: MAPILLARY_TOKEN,
+      container: 'sv-container',
+      imageId: imageId,
+      component: { cover: false, sequence: false, zoom: false }
+    });
+    _svViewer.on('load', function() { document.getElementById('sv-container').classList.add('loaded'); });
+  } else {
+    _svViewer.moveTo(imageId).then(function() { document.getElementById('sv-container').classList.add('loaded'); }).catch(function() {});
+  }
+}
+   ────────────────────────────────────────────────────────────── */
+
+// Wikipedia city name overrides (fallback only — where article title differs from game name)
 var WIKI_NAMES = {
   'New York':      'New York City',
-  'Rio de Janeiro':'Rio de Janeiro',
   'Ho Chi Minh':   'Ho Chi Minh City',
-  'São Paulo':     'São Paulo',
 };
-var _photoCache = {};
-function fetchWikiPhoto(city, callback) {
-  if (_photoCache[city] !== undefined) { callback(_photoCache[city]); return; }
-  var name = encodeURIComponent(WIKI_NAMES[city] || city);
-  fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + name)
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      var url = (d.originalimage && d.originalimage.source) || (d.thumbnail && d.thumbnail.source) || null;
-      _photoCache[city] = url;
-      callback(url);
-    })
-    .catch(function() { _photoCache[city] = null; callback(null); });
-}
 
 const WITNESS_AVATARS = {
   'Ticket Agent':'🎫','Café Owner':'☕','Hotel Concierge':'🛎️',
@@ -719,6 +1053,13 @@ var Audio = (function() {
     reveal:  function(){try{var c=getCtx(),t=c.currentTime;tone(440,t,0.07,'sine',0.08);tone(660,t+0.08,0.14,'sine',0.11);}catch(e){}},
     correct: function(){try{var c=getCtx(),t=c.currentTime;tone(523,t,0.14,'sine',0.14);tone(659,t+0.12,0.14,'sine',0.14);tone(784,t+0.24,0.30,'sine',0.16);}catch(e){}},
     wrong:   function(){try{var c=getCtx(),t=c.currentTime;tone(260,t,0.15,'sawtooth',0.09);tone(200,t+0.14,0.22,'sawtooth',0.07);}catch(e){}},
+    correctBig: function(){try{
+      var c=getCtx(),t=c.currentTime;
+      // Fast ascending arpeggio A4→C#5→E5→A5, then big top note
+      [440,554,659,880].forEach(function(f,i){tone(f,t+i*0.09,0.18,'sine',0.13);});
+      tone(1175,t+0.42,0.55,'sine',0.18);   // D6 — triumphant peak
+      tone(587, t+0.42,0.55,'triangle',0.08); // D5 — harmony layer
+    }catch(e){}},
     fanfare: function(){try{var c=getCtx(),t=c.currentTime;[523,659,784,1047].forEach(function(f,i){tone(f,t+i*0.11,0.22,'sine',0.14);});}catch(e){}},
     copy:    function(){try{var c=getCtx();tone(1047,c.currentTime,0.12,'sine',0.09);}catch(e){}},
     message: function(){try{var c=getCtx(),t=c.currentTime;tone(800,t,0.04,'sine',0.07);tone(1000,t+0.05,0.06,'sine',0.07);}catch(e){}},
@@ -910,6 +1251,20 @@ function hideStageOverlay() {
 
 // ────────────────────────────────────────────
 // WITNESS STAGE
+function showCorrectFlash(name, callback) {
+  Audio.correctBig();
+  document.getElementById('cf-city-name').textContent = name;
+  var el = document.getElementById('correct-flash');
+  // Force reflow so animation restarts cleanly on repeated calls
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  setTimeout(function() {
+    el.classList.remove('show'); // CSS transition fades it out
+    setTimeout(callback, 340);
+  }, 1600);
+}
+
 // ────────────────────────────────────────────
 function showCityLanding() {
   var city = S.currentCity || C().startingCity;
@@ -918,16 +1273,9 @@ function showCityLanding() {
   document.getElementById('landing-panel').style.display = 'flex';
   document.getElementById('clue-panel').classList.remove('open');
 
-  // Wiki photo background
-  var stage = document.getElementById('witness-stage');
-  stage.style.backgroundImage = 'none';
-  stage.style.background = 'linear-gradient(160deg,#070b18 0%,#0d1a2e 100%)';
-  fetchWikiPhoto(city, function(url) {
-    if (url) {
-      stage.style.backgroundImage = 'url(' + url + ')';
-      stage.style.background = '';
-    }
-  });
+  // Street view background — Mapillary viewer, falls back to wiki photo
+  document.getElementById('witness-stage').style.backgroundImage = '';
+  loadStreetView(S.currentLat, S.currentLng, city);
 
   showWitnessStage();
   showHUD();
@@ -1066,6 +1414,7 @@ function onAcceptCase() {
     hideFlightOverlay();
     addFlightArc(fromLat, fromLng, c.startLat, c.startLng, '#e8b84b', 2400);
     globeFlyTo(c.startLat, c.startLng, 1.8, 2600);
+    loadStreetView(c.startLat, c.startLng, c.startingCity); // pre-warm during flight
 
     setTimeout(function() {
       clearArcs();
@@ -1116,14 +1465,25 @@ function handleCityTap(name, idx) {
     clearPins();
     hidePickHint();
 
-    // Fly to correct city
+    // Fly to correct city — pre-warm Street View during the arc
+    loadStreetView(opt.lat, opt.lng, name);
     addFlightArc(S.currentLat, S.currentLng, opt.lat, opt.lng, '#e8b84b', 1800);
     globeFlyTo(opt.lat, opt.lng, 1.5, 2000);
 
     setTimeout(function() {
       clearArcs();
       S.currentLat = opt.lat; S.currentLng = opt.lng;
-      showCorrectCity(name);
+      showCorrectFlash(name, function() {
+        if (S.legIdx >= 3) {
+          showResult();
+        } else {
+          S.legIdx++;
+          S.witnessIdx = 0; S.wrongGuessesThisLeg = 0;
+          S.eliminatedIdxs = []; S.activeClueTab = 0;
+          showCityLanding();
+          updateHUD();
+        }
+      });
     }, 2200);
 
   } else {
