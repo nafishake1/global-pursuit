@@ -4,6 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Global Pursuit — Web Prototype</title>
+  <script src="config.js"></script>
+  <script>
+    (function() {
+      var s = document.createElement('script');
+      s.src = 'https://maps.googleapis.com/maps/api/js?key=' + (window.MAPS_KEY || '');
+      document.head.appendChild(s);
+    })();
+  </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -166,6 +174,59 @@
       background: #04040c;
     }
     #globe-stage canvas { display: block; }
+
+    /* Street View stage */
+    #streetview-stage {
+      position: absolute; inset: 0;
+      display: none;
+    }
+    #streetview-stage.active { display: block; }
+    #streetview-pano { position: absolute; inset: 0; }
+
+    #sv-hint-bar {
+      position: absolute; top: 24px; left: 50%; transform: translateX(-50%);
+      background: rgba(8,8,18,0.88); backdrop-filter: blur(16px);
+      border: 1px solid var(--gold); border-radius: 40px;
+      padding: 10px 22px; display: flex; align-items: center; gap: 10px;
+      z-index: 10; pointer-events: none;
+    }
+    .sv-hint-label {
+      font-size: 10px; font-weight: 900; letter-spacing: 0.14em;
+      color: var(--gold); text-transform: uppercase;
+    }
+    #sv-hint-name {
+      font-size: 15px; font-weight: 700; color: #fff;
+    }
+    #sv-hint-compass {
+      font-size: 18px;
+    }
+
+    #sv-found-panel {
+      position: absolute; bottom: 0; left: 0; right: 0; z-index: 20;
+      transform: translateY(100%);
+      transition: transform 0.42s cubic-bezier(0.16,1,0.3,1);
+      background: rgba(8,8,18,0.97); backdrop-filter: blur(24px);
+      border-top: 1px solid var(--border); padding: 28px 32px 40px;
+    }
+    #sv-found-panel.open { transform: translateY(0); }
+    .sv-found-tag {
+      font-size: 10px; font-weight: 900; letter-spacing: 0.14em;
+      color: var(--green); text-transform: uppercase; margin-bottom: 8px;
+    }
+    .sv-found-landmark {
+      font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 12px;
+    }
+    #sv-found-clue {
+      font-size: 15px; line-height: 1.65; color: var(--muted); margin-bottom: 24px;
+      font-style: italic;
+    }
+    .btn-sv-travel {
+      display: inline-block; padding: 14px 32px;
+      background: var(--gold); color: #0d0d14;
+      border: none; border-radius: 10px; font-size: 15px; font-weight: 800;
+      cursor: pointer; letter-spacing: 0.02em;
+    }
+    .btn-sv-travel:active { opacity: 0.85; transform: scale(0.98); }
 
     /* Witness stage */
     #witness-stage {
@@ -464,7 +525,7 @@
           <div class="landing-tag">YOU'RE IN</div>
           <div class="landing-city" id="landing-city-name">Berlin</div>
           <div class="landing-meta" id="landing-meta">Case #1 · Move 1 of 4</div>
-          <button class="btn-get-intel" onclick="getFirstClue()">Talk to witnesses →</button>
+          <button class="btn-get-intel" onclick="openStreetView()">Explore city →</button>
         </div>
       </div>
 
@@ -482,6 +543,22 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Street View stage -->
+    <div id="streetview-stage">
+      <div id="streetview-pano"></div>
+      <div id="sv-hint-bar">
+        <span class="sv-hint-label">Find</span>
+        <span id="sv-hint-name">Brandenburg Gate</span>
+        <span id="sv-hint-compass">🧭</span>
+      </div>
+      <div id="sv-found-panel">
+        <div class="sv-found-tag">✓ Landmark found</div>
+        <div class="sv-found-landmark" id="sv-found-landmark"></div>
+        <div id="sv-found-clue"></div>
+        <button class="btn-sv-travel" onclick="openMap()">Travel →</button>
       </div>
     </div>
 
@@ -834,87 +911,27 @@ const CASES = [
     legs: [
       {
         target: 'Tokyo', targetLat: 35.68, targetLng: 139.69,
-
-        witnesses: [
-          { who:'Ticket Agent', clue:'"She asked for a window seat facing east — wanted to watch the sunrise over the Pacific. Very specific about it."' },
-          { who:'Café Owner',   clue:'"Paid with yen — notes with Mount Fuji printed on them. Said her hotel was near the famous crossing where thousands walk at once."' },
-          { who:'Taxi Driver',  clue:'"Dropped her at Narita. Couldn\'t stop talking about the bullet train. Said nothing in the world compares."' },
-        ],
-        options: [
-          { name:'Tokyo',    lat:35.68,  lng:139.69 },
-          { name:'Seoul',    lat:37.57,  lng:126.98 },
-          { name:'Shanghai', lat:31.23,  lng:121.47 },
-          { name:'Beijing',  lat:39.91,  lng:116.39 },
-        ],
-        correct: 0,
-        nopeLines: [
-          { who:'Taxi Driver',     line:'"I\'ve driven every street in this city. I haven\'t had that passenger."' },
-          { who:'Hotel Concierge', line:'"Every guest comes through my desk. That guest has never come through my desk."' },
-          { who:'Café Owner',      line:'"I know every customer. That face has never sat at my tables."' },
-        ]
+        svLat: 52.5145, svLng: 13.3777, svHeading: 355,
+        landmarkName: 'Brandenburg Gate', landmarkLat: 52.5163, landmarkLng: 13.3777,
+        clue: 'A torn ticket stub left on the counter. Window seat, east-facing — she wanted to watch the sunrise over the Pacific. The booth attendant said she paid with notes printed with a volcanic mountain. Mentioned a crossing where thousands walk at once, perfectly in sync.',
       },
       {
         target: 'Sydney', targetLat: -33.87, targetLng: 151.21,
-
-        witnesses: [
-          { who:'Hotel Concierge', clue:'"She checked out early — said she had a harbour view. Said it was the most recognisable skyline she\'d ever seen."' },
-          { who:'Barista',         clue:'"Left a magazine open — bookmarked page had a white shell-shaped building on the waterfront. She\'d circled it in pen."' },
-          { who:'Market Vendor',   clue:'"Paid in Australian dollars. Said she was meeting someone at Bondi — the beach, not a café. Very clear about that."' },
-        ],
-        options: [
-          { name:'Sydney',    lat:-33.87, lng:151.21 },
-          { name:'Melbourne', lat:-37.81, lng:144.97 },
-          { name:'Auckland',  lat:-36.86, lng:174.76 },
-          { name:'Cape Town', lat:-33.93, lng:18.42  },
-        ],
-        correct: 0,
-        nopeLines: [
-          { who:'Hotel Concierge', line:'"Every check-in comes through me. That name has never come through me."' },
-          { who:'Taxi Driver',     line:'"I know this city. That passenger hasn\'t been in my cab."' },
-          { who:'Café Owner',      line:'"I know every customer. That customer has never been in here."' },
-        ]
+        svLat: 35.6590, svLng: 139.7025, svHeading: 280,
+        landmarkName: 'Shibuya Crossing', landmarkLat: 35.6595, landmarkLng: 139.7004,
+        clue: 'She left a magazine open on the table — a white shell-shaped building on a waterfront, like nothing else in the world. She\'d circled it in pen. Said the harbour view from her hotel was worth every cent.',
       },
       {
         target: 'Cairo', targetLat: 30.05, targetLng: 31.24,
-
-        witnesses: [
-          { who:'Airport Staff', clue:'"She booked a connection heading south. Said she wanted to see the river — the great one. The ancient one."' },
-          { who:'Café Owner',    clue:'"Kept scrolling through photos. Stone structures — enormous, triangular. Ancient. Asked if I\'d ever seen them in person."' },
-          { who:'Museum Guard',  clue:'"Asked for directions to the Egyptian Museum. Said she needed to see the artefacts before a meeting near the Sphinx."' },
-        ],
-        options: [
-          { name:'Cairo',        lat:30.05,  lng:31.24  },
-          { name:'Nairobi',      lat:-1.29,  lng:36.82  },
-          { name:'Casablanca',   lat:33.57,  lng:-7.59  },
-          { name:'Johannesburg', lat:-26.20, lng:28.04  },
-        ],
-        correct: 0,
-        nopeLines: [
-          { who:'Museum Guard',  line:'"I watch everyone who enters. That face has never entered these galleries."' },
-          { who:'Café Owner',    line:'"I would remember that order. I don\'t."' },
-          { who:'Airport Staff', line:'"That name isn\'t on any manifest through this terminal."' },
-        ]
+        svLat: -33.8580, svLng: 151.2130, svHeading: 60,
+        landmarkName: 'Sydney Opera House', landmarkLat: -33.8568, landmarkLng: 151.2153,
+        clue: 'She kept mentioning a river — the great one, the ancient one. Stone structures, enormous, triangular. She asked for directions to a museum housing artefacts older than any nation on earth.',
       },
       {
         target: 'Rio de Janeiro', targetLat: -22.91, targetLng: -43.17,
-
-        witnesses: [
-          { who:'Taxi Driver',     clue:'"She was excited — heading somewhere you could see a massive statue with its arms wide open, standing on a mountain above the whole city."' },
-          { who:'Bartender',       clue:'"Ordered a caipirinha. Said it tasted better here than anywhere. Mentioned Copacabana — the beach, not the song."' },
-          { who:'Hotel Concierge', clue:'"Left a postcard — Sugar Loaf Mountain on the front. Paid in reais. Said her contact was waiting near the harbour."' },
-        ],
-        options: [
-          { name:'Rio de Janeiro', lat:-22.91, lng:-43.17 },
-          { name:'São Paulo',      lat:-23.55, lng:-46.63 },
-          { name:'Buenos Aires',   lat:-34.60, lng:-58.38 },
-          { name:'Lima',           lat:-12.04, lng:-77.03 },
-        ],
-        correct: 0,
-        nopeLines: [
-          { who:'Bartender',       line:'"I remember every face at this bar. That face has never ordered here."' },
-          { who:'Hotel Concierge', line:'"Every guest comes through this lobby. That guest has not."' },
-          { who:'Taxi Driver',     line:'"I\'ve driven every corner of this city. That ride hasn\'t been in my cab."' },
-        ]
+        svLat: 30.0470, svLng: 31.2320, svHeading: 90,
+        landmarkName: 'Egyptian Museum', landmarkLat: 30.0478, landmarkLng: 31.2336,
+        clue: 'A postcard tucked under the register. Sugar Loaf Mountain — a peak rising straight from the sea. On the back: a massive statue, arms wide open, standing above the whole city. She mentioned Copacabana. Paid in reais.',
       }
     ]
   },
@@ -927,87 +944,27 @@ const CASES = [
     legs: [
       {
         target: 'New York', targetLat: 40.71, targetLng: -74.01,
-
-        witnesses: [
-          { who:'Ticket Agent',    clue:'"She hailed a cab the second she walked out. Said she was heading to the city that never sleeps. Her exact words."' },
-          { who:'Café Owner',      clue:'"Left her newspaper open — headline about Wall Street. She\'d circled something about a meeting in Manhattan."' },
-          { who:'Hotel Concierge', clue:'"Checked out complaining it was too loud to sleep. Times Square, she said. Then laughed and said she loved it anyway."' },
-        ],
-        options: [
-          { name:'New York',    lat:40.71,  lng:-74.01  },
-          { name:'London',      lat:51.51,  lng:-0.13   },
-          { name:'Chicago',     lat:41.88,  lng:-87.63  },
-          { name:'Los Angeles', lat:34.05,  lng:-118.24 },
-        ],
-        correct: 0,
-        nopeLines: [
-          { who:'Hotel Concierge', line:'"Every guest comes through me. That guest hasn\'t."' },
-          { who:'Taxi Driver',     line:'"I\'d remember that fare. I don\'t."' },
-          { who:'Café Owner',      line:'"That\'s not a face I\'ve seen. I\'d remember."' },
-        ]
+        svLat: 48.8538, svLng: 2.2975, svHeading: 330,
+        landmarkName: 'Eiffel Tower', landmarkLat: 48.8584, landmarkLng: 2.2945,
+        clue: 'A newspaper abandoned on the table — Wall Street headlines, one paragraph circled in red. She hailed a cab the second she stepped outside. Said she was heading to the city that never sleeps.',
       },
       {
         target: 'Dubai', targetLat: 25.20, targetLng: 55.27,
-
-        witnesses: [
-          { who:'Taxi Driver',   clue:'"Heading to the Gulf — said she was going to see the tallest building in the world. Kept saying the city didn\'t exist fifty years ago."' },
-          { who:'Market Vendor', clue:'"Paid in dirhams. Said the city went from a fishing village to skyscrapers within her lifetime. Seemed genuinely amazed."' },
-          { who:'Airport Staff', clue:'"She was on the Dubai flight. Asked which floor the observation deck was on at the Burj Khalifa. I told her the 124th."' },
-        ],
-        options: [
-          { name:'Dubai',     lat:25.20, lng:55.27 },
-          { name:'Abu Dhabi', lat:24.47, lng:54.37 },
-          { name:'Doha',      lat:25.29, lng:51.53 },
-          { name:'Riyadh',    lat:24.69, lng:46.72 },
-        ],
-        correct: 0,
-        nopeLines: [
-          { who:'Airport Staff', line:'"That passenger hasn\'t come through this gate."' },
-          { who:'Hotel Concierge',line:'"That name is not in my system."' },
-          { who:'Market Vendor', line:'"That face hasn\'t passed my stall."' },
-        ]
+        svLat: 40.7510, svLng: -73.9860, svHeading: 180,
+        landmarkName: 'Empire State Building', landmarkLat: 40.7484, landmarkLng: -73.9857,
+        clue: 'Said she was heading to see the tallest building in the world. Kept marvelling that the city went from a desert fishing village to skyscrapers within a single lifetime. Asked about the 124th floor observation deck.',
       },
       {
         target: 'Bangkok', targetLat: 13.75, targetLng: 100.52,
-
-        witnesses: [
-          { who:'Café Owner',  clue:'"Heading to Southeast Asia — golden temples, she kept saying. Said the city smelled like street food and she couldn\'t wait to get back."' },
-          { who:'Taxi Driver', clue:'"She went straight to the Grand Palace — in a tuk-tuk, not a cab. Waved at me as she sped past."' },
-          { who:'Bartender',   clue:'"Mentioned Khao San Road. Said she was meeting someone at the floating market at dawn. Left a generous tip in Thai baht."' },
-        ],
-        options: [
-          { name:'Bangkok',      lat:13.75, lng:100.52 },
-          { name:'Singapore',    lat:1.35,  lng:103.82 },
-          { name:'Kuala Lumpur', lat:3.14,  lng:101.69 },
-          { name:'Ho Chi Minh',  lat:10.82, lng:106.66 },
-        ],
-        correct: 0,
-        nopeLines: [
-          { who:'Bartender',  line:'"I remember every face at this bar. That face hasn\'t been here."' },
-          { who:'Café Owner', line:'"Every customer gets a receipt. No receipt for that customer."' },
-          { who:'Taxi Driver',line:'"That\'s not a fare I\'ve had. I would know."' },
-        ]
+        svLat: 25.1940, svLng: 55.2740, svHeading: 10,
+        landmarkName: 'Burj Khalifa', landmarkLat: 25.1972, landmarkLng: 55.2744,
+        clue: 'Heading southeast — golden temples, she kept saying. Street food everywhere. Said she was meeting someone at the floating market at dawn. Left a generous tip in Thai baht.',
       },
       {
         target: 'Istanbul', targetLat: 41.01, targetLng: 28.95,
-
-        witnesses: [
-          { who:'Hotel Concierge', clue:'"She was thrilled — said she was heading somewhere you could have breakfast in Europe and dinner in Asia. Same city. Same day."' },
-          { who:'Museum Guard',    clue:'"She mentioned the call to prayer from the Blue Mosque woke her every morning. Said the Bosphorus at sunset was worth the early alarm."' },
-          { who:'Café Owner',      clue:'"Left a postcard of the Hagia Sophia. Paid in lira. Said her contact was waiting near the Grand Bazaar."' },
-        ],
-        options: [
-          { name:'Istanbul', lat:41.01, lng:28.95 },
-          { name:'Athens',   lat:37.98, lng:23.73 },
-          { name:'Rome',     lat:41.90, lng:12.50 },
-          { name:'Cairo',    lat:30.05, lng:31.24 },
-        ],
-        correct: 0,
-        nopeLines: [
-          { who:'Hotel Concierge', line:'"Every guest comes through this door. That guest hasn\'t."' },
-          { who:'Museum Guard',    line:'"I watch these galleries all day. That visitor hasn\'t passed through."' },
-          { who:'Café Owner',      line:'"I know every regular. And I\'d remember a first visit like that."' },
-        ]
+        svLat: 13.7480, svLng: 100.4935, svHeading: 0,
+        landmarkName: 'Grand Palace', landmarkLat: 13.7500, landmarkLng: 100.4913,
+        clue: 'She was thrilled — heading somewhere you could have breakfast in Europe and dinner in Asia. Same city, same day. She left a postcard of the Hagia Sophia on the table. Paid in lira.',
       }
     ]
   }
@@ -1164,7 +1121,7 @@ var S = {
 
 function C()    { return CASES[S.caseIdx]; }
 function leg()  { return C().legs[S.legIdx]; }
-function calcScore() { return Math.max(0, 100 - S.witnessIdx * 20 - S.wrongGuessesThisLeg * 25); }
+function calcScore() { return Math.max(0, 100 - S.wrongGuessesThisLeg * 25); }
 function legEmoji(s) { return s>=100?'🔥':s>=80?'🏆':s>=60?'🎯':s>=40?'😅':'💀'; }
 
 // ────────────────────────────────────────────
@@ -1371,8 +1328,7 @@ function updateHUD() {
   document.getElementById('hud-move').textContent     = 'Case #'+C().number+' · Move '+(S.legIdx+1)+' of 4';
   document.getElementById('hud-state').textContent    = 'Where did they go?';
   document.getElementById('hud-score').textContent    = calcScore();
-  var wl = S.witnessIdx===0?'W1 revealed':S.witnessIdx===1?'W1 + W2 revealed':'All 3 witnesses';
-  document.getElementById('hud-witnesses').textContent = wl;
+  document.getElementById('hud-witnesses').textContent = _svReached ? '✓ ' + (leg().landmarkName || 'Landmark found') : 'Find: ' + (leg().landmarkName || '…');
 }
 function showPickHint()  { document.getElementById('pick-hint').classList.add('visible'); }
 function hidePickHint()  { document.getElementById('pick-hint').classList.remove('visible'); }
@@ -1419,22 +1375,82 @@ function showCityLanding() {
   updateHUD();
 }
 
-function getFirstClue() {
-  Audio.reveal();
+// ────────────────────────────────────────────
+// STREET VIEW
+// ────────────────────────────────────────────
+var _sv = null;
+var _svListener = null;
+var _svReached = false;
+
+function showStreetViewStage() { document.getElementById('streetview-stage').classList.add('active'); }
+function hideStreetViewStage() { document.getElementById('streetview-stage').classList.remove('active'); }
+
+function openStreetView() {
+  Audio.click();
   document.getElementById('landing-panel').style.display = 'none';
-  document.getElementById('clue-panel').classList.add('open');
-  updateCluePanel();
+  hideWitnessStage();
+
+  var l = leg();
+  _svReached = false;
+  document.getElementById('sv-hint-name').textContent = l.landmarkName;
+  document.getElementById('sv-found-panel').classList.remove('open');
+
+  showStreetViewStage();
+  showHUD();
+
+  if (typeof google === 'undefined' || !google.maps) {
+    onLandmarkFound();
+    return;
+  }
+
+  requestAnimationFrame(function() {
+    if (!_sv) {
+      _sv = new google.maps.StreetViewPanorama(
+        document.getElementById('streetview-pano'), {
+          addressControl: false, showRoadLabels: false,
+          zoomControl: false, fullscreenControl: false,
+          motionTracking: false, motionTrackingControl: false,
+          linksControl: true, panControl: true,
+        }
+      );
+    } else {
+      google.maps.event.trigger(_sv, 'resize');
+    }
+    _sv.setPosition({ lat: l.svLat, lng: l.svLng });
+    _sv.setPov({ heading: l.svHeading, pitch: 0, zoom: 1 });
+    if (_svListener) { google.maps.event.removeListener(_svListener); _svListener = null; }
+    _svListener = _sv.addListener('position_changed', checkLandmarkProximity);
+  });
 }
 
-function updateCluePanel() {
-  var ws = leg().witnesses[S.witnessIdx];
-  document.getElementById('witness-avatar').textContent    = WITNESS_AVATARS[ws.who] || '👁';
-  document.getElementById('witness-clue-num').textContent  = 'CLUE ' + (S.witnessIdx+1) + (S.witnessIdx===0 ? ' · FREE' : ' · −20 pts');
-  document.getElementById('witness-name').textContent      = ws.who;
-  document.getElementById('witness-clue-text').textContent = ws.clue;
-  var btn = document.getElementById('btn-more-intel');
-  btn.disabled = (S.witnessIdx >= 2);
-  btn.textContent = S.witnessIdx >= 2 ? 'All intel revealed' : 'More intel · −20 pts';
+function haversineDistance(lat1, lng1, lat2, lng2) {
+  var R = 6371000;
+  var dLat = (lat2 - lat1) * Math.PI / 180;
+  var dLng = (lng2 - lng1) * Math.PI / 180;
+  var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+          Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
+          Math.sin(dLng/2) * Math.sin(dLng/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function checkLandmarkProximity() {
+  if (_svReached || !_sv) return;
+  var l = leg();
+  var pos = _sv.getPosition();
+  if (!pos) return;
+  var dist = haversineDistance(pos.lat(), pos.lng(), l.landmarkLat, l.landmarkLng);
+  if (dist < 120) onLandmarkFound();
+}
+
+function onLandmarkFound() {
+  _svReached = true;
+  if (_svListener) { google.maps.event.removeListener(_svListener); _svListener = null; }
+  Audio.correct();
+  flash('rgba(34,197,94,0.2)', 0.5);
+  var l = leg();
+  document.getElementById('sv-found-landmark').textContent = l.landmarkName;
+  document.getElementById('sv-found-clue').textContent = l.clue;
+  document.getElementById('sv-found-panel').classList.add('open');
 }
 
 // ────────────────────────────────────────────
@@ -1587,6 +1603,7 @@ function buyWitness() {
 function openMap() {
   Audio.click();
   hideWitnessStage();
+  hideStreetViewStage();
   showGlobeStage();
   showPickHint();
   hideStageOverlay();
@@ -1709,6 +1726,7 @@ function advanceLeg() {
 
   hideStageOverlay();
   hideWitnessStage();
+  hideStreetViewStage();
   showGlobeStage();
   clearPins();
 
@@ -1778,9 +1796,11 @@ function nextCase() {
   S.caseIdx=(S.caseIdx+1)%CASES.length;
   hideStageOverlay();
   hideWitnessStage();
+  hideStreetViewStage();
   hidePickHint();
   hideHUD();
   clearPins(); clearArcs();
+  _sv = null; _svListener = null; _svReached = false;
   startBriefSequence();
 }
 
@@ -1791,6 +1811,7 @@ window.addEventListener('DOMContentLoaded', function() {
   hideGlobeStage();
   hideHUD();
   hideWitnessStage();
+  hideStreetViewStage();
   hideFlightOverlay();
   // Globe init is deferred until first showGlobeStage() call,
   // so it measures real dimensions (not 0x0 while hidden)
