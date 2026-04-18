@@ -109,7 +109,7 @@
     }
     .artifact-photo {
       background: linear-gradient(160deg, #1e1205 0%, #3d2509 50%, #1e1205 100%);
-      padding: 28px 20px 22px; display: flex; flex-direction: column;
+      padding: 16px 20px 14px; display: flex; flex-direction: column;
       align-items: center; text-align: center; position: relative;
       border-bottom: 1px solid rgba(255,255,255,0.07);
     }
@@ -117,7 +117,7 @@
       content: ''; position: absolute; inset: 0;
       background: repeating-linear-gradient(0deg, transparent, transparent 22px, rgba(232,184,75,0.03) 22px, rgba(232,184,75,0.03) 23px);
     }
-    .artifact-emoji { font-size: 54px; position: relative; z-index: 1; filter: drop-shadow(0 0 16px rgba(232,184,75,0.45)); }
+    .artifact-emoji { font-size: 40px; position: relative; z-index: 1; filter: drop-shadow(0 0 16px rgba(232,184,75,0.45)); }
     .artifact-name  { font-size: 11px; font-weight: 800; color: rgba(232,184,75,0.85); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 10px; position: relative; z-index: 1; }
     .artifact-desc  { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 3px; letter-spacing: 0.06em; position: relative; z-index: 1; }
     .case-file-body { background: #c4913a; padding: 14px 16px 16px; }
@@ -1014,6 +1014,142 @@ const CASES = [
 ];
 
 // ────────────────────────────────────────────
+// CITY POOL (decoy candidates)
+// ────────────────────────────────────────────
+var CITY_POOL = [
+  {name:'London',       lat:51.51,  lng:-0.13  },
+  {name:'Paris',        lat:48.85,  lng:2.35   },
+  {name:'Berlin',       lat:52.52,  lng:13.41  },
+  {name:'Madrid',       lat:40.42,  lng:-3.70  },
+  {name:'Rome',         lat:41.90,  lng:12.50  },
+  {name:'Amsterdam',    lat:52.37,  lng:4.90   },
+  {name:'Vienna',       lat:48.21,  lng:16.37  },
+  {name:'Prague',       lat:50.08,  lng:14.44  },
+  {name:'Warsaw',       lat:52.23,  lng:21.01  },
+  {name:'Stockholm',    lat:59.33,  lng:18.07  },
+  {name:'Oslo',         lat:59.91,  lng:10.75  },
+  {name:'Copenhagen',   lat:55.68,  lng:12.57  },
+  {name:'Zurich',       lat:47.38,  lng:8.54   },
+  {name:'Brussels',     lat:50.85,  lng:4.35   },
+  {name:'Lisbon',       lat:38.72,  lng:-9.14  },
+  {name:'Athens',       lat:37.98,  lng:23.73  },
+  {name:'Istanbul',     lat:41.01,  lng:28.95  },
+  {name:'Moscow',       lat:55.75,  lng:37.62  },
+  {name:'Tokyo',        lat:35.68,  lng:139.69 },
+  {name:'Seoul',        lat:37.57,  lng:126.98 },
+  {name:'Beijing',      lat:39.91,  lng:116.39 },
+  {name:'Shanghai',     lat:31.23,  lng:121.47 },
+  {name:'Hong Kong',    lat:22.32,  lng:114.17 },
+  {name:'Singapore',    lat:1.35,   lng:103.82 },
+  {name:'Bangkok',      lat:13.75,  lng:100.52 },
+  {name:'Mumbai',       lat:19.08,  lng:72.88  },
+  {name:'Delhi',        lat:28.61,  lng:77.21  },
+  {name:'Dubai',        lat:25.20,  lng:55.27  },
+  {name:'Riyadh',       lat:24.69,  lng:46.72  },
+  {name:'Nairobi',      lat:-1.29,  lng:36.82  },
+  {name:'Cairo',        lat:30.05,  lng:31.24  },
+  {name:'Casablanca',   lat:33.57,  lng:-7.59  },
+  {name:'Lagos',        lat:6.52,   lng:3.38   },
+  {name:'Johannesburg', lat:-26.20, lng:28.04  },
+  {name:'Cape Town',    lat:-33.93, lng:18.42  },
+  {name:'Sydney',       lat:-33.87, lng:151.21 },
+  {name:'Melbourne',    lat:-37.81, lng:144.97 },
+  {name:'Auckland',     lat:-36.86, lng:174.76 },
+  {name:'New York',     lat:40.71,  lng:-74.01 },
+  {name:'Los Angeles',  lat:34.05,  lng:-118.24},
+  {name:'Chicago',      lat:41.88,  lng:-87.63 },
+  {name:'Toronto',      lat:43.65,  lng:-79.38 },
+  {name:'Mexico City',  lat:19.43,  lng:-99.13 },
+  {name:'São Paulo',    lat:-23.55, lng:-46.63 },
+  {name:'Rio de Janeiro',lat:-22.91,lng:-43.17 },
+  {name:'Buenos Aires', lat:-34.60, lng:-58.38 },
+  {name:'Lima',         lat:-12.04, lng:-77.03 },
+  {name:'Bogotá',       lat:4.71,   lng:-74.07 },
+  {name:'Santiago',     lat:-33.46, lng:-70.65 },
+  {name:'Kuala Lumpur', lat:3.14,   lng:101.69 },
+  {name:'Jakarta',      lat:-6.21,  lng:106.85 },
+  {name:'Manila',       lat:14.60,  lng:120.98 },
+  {name:'Karachi',      lat:24.86,  lng:67.01  },
+  {name:'Lahore',       lat:31.55,  lng:74.34  },
+  {name:'Dhaka',        lat:23.72,  lng:90.41  },
+  {name:'Taipei',       lat:25.03,  lng:121.57 },
+  {name:'Osaka',        lat:34.69,  lng:135.50 },
+  {name:'Busan',        lat:35.10,  lng:129.04 },
+  {name:'Guangzhou',    lat:23.13,  lng:113.26 },
+  {name:'Chengdu',      lat:30.57,  lng:104.07 },
+  {name:'Kolkata',      lat:22.57,  lng:88.36  },
+  {name:'Bangalore',    lat:12.97,  lng:77.59  },
+  {name:'Addis Ababa',  lat:9.03,   lng:38.74  },
+  {name:'Dar es Salaam',lat:-6.79,  lng:39.21  },
+  {name:'Accra',        lat:5.56,   lng:-0.20  },
+  {name:'Kinshasa',     lat:-4.32,  lng:15.32  },
+  {name:'Algiers',      lat:36.74,  lng:3.06   },
+  {name:'Tunis',        lat:36.82,  lng:10.17  },
+  {name:'Amman',        lat:31.95,  lng:35.93  },
+  {name:'Tehran',       lat:35.69,  lng:51.42  },
+  {name:'Baghdad',      lat:33.34,  lng:44.40  },
+  {name:'Kabul',        lat:34.53,  lng:69.17  },
+  {name:'Tashkent',     lat:41.30,  lng:69.24  },
+  {name:'Almaty',       lat:43.24,  lng:76.89  },
+  {name:'Kathmandu',    lat:27.72,  lng:85.32  },
+  {name:'Colombo',      lat:6.93,   lng:79.84  },
+  {name:'Yangon',       lat:16.87,  lng:96.17  },
+  {name:'Phnom Penh',   lat:11.56,  lng:104.92 },
+  {name:'Ho Chi Minh',  lat:10.82,  lng:106.63 },
+  {name:'Hanoi',        lat:21.03,  lng:105.84 },
+  {name:'Ulaanbaatar',  lat:47.92,  lng:106.92 },
+  {name:'Havana',       lat:23.14,  lng:-82.36 },
+  {name:'San José',     lat:9.93,   lng:-84.09 },
+  {name:'Panama City',  lat:8.99,   lng:-79.52 },
+  {name:'Quito',        lat:-0.23,  lng:-78.52 },
+  {name:'La Paz',       lat:-16.50, lng:-68.15 },
+  {name:'Asunción',     lat:-25.29, lng:-57.64 },
+  {name:'Montevideo',   lat:-34.90, lng:-56.19 },
+  {name:'Caracas',      lat:10.48,  lng:-66.88 },
+  {name:'Miami',        lat:25.77,  lng:-80.19 },
+  {name:'Vancouver',    lat:49.25,  lng:-123.12},
+  {name:'Montreal',     lat:45.51,  lng:-73.55 },
+  {name:'San Francisco',lat:37.77,  lng:-122.42},
+  {name:'Seattle',      lat:47.61,  lng:-122.33},
+  {name:'Reykjavik',    lat:64.14,  lng:-21.90 },
+  {name:'Dublin',       lat:53.33,  lng:-6.25  },
+  {name:'Edinburgh',    lat:55.95,  lng:-3.19  },
+  {name:'Kyiv',         lat:50.45,  lng:30.52  },
+  {name:'Bucharest',    lat:44.44,  lng:26.10  },
+  {name:'Budapest',     lat:47.50,  lng:19.04  },
+  {name:'Belgrade',     lat:44.80,  lng:20.46  },
+  {name:'Sofia',        lat:42.70,  lng:23.32  },
+  {name:'Minsk',        lat:53.90,  lng:27.57  },
+  {name:'Tbilisi',      lat:41.69,  lng:44.83  },
+  {name:'Baku',         lat:40.41,  lng:49.87  },
+  {name:'Yerevan',      lat:40.18,  lng:44.51  },
+  {name:'Helsinki',     lat:60.17,  lng:24.94  },
+  {name:'Riga',         lat:56.95,  lng:24.11  },
+  {name:'Vilnius',      lat:54.69,  lng:25.28  },
+  {name:'Tallinn',      lat:59.44,  lng:24.75  },
+];
+
+function generateLegOptions(targetName, targetLat, targetLng, excludeNames) {
+  var exclude = (excludeNames || []).map(function(n){ return n.toLowerCase(); });
+  exclude.push(targetName.toLowerCase());
+  var pool = CITY_POOL.filter(function(c){ return exclude.indexOf(c.name.toLowerCase()) === -1; });
+  // shuffle pool
+  for (var i = pool.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+  }
+  var decoys = pool.slice(0, 7);
+  var options = decoys.concat([{name: targetName, lat: targetLat, lng: targetLng}]);
+  // shuffle options
+  for (var i = options.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = options[i]; options[i] = options[j]; options[j] = tmp;
+  }
+  var correctIdx = options.findIndex(function(o){ return o.name === targetName; });
+  return { options: options, correct: correctIdx };
+}
+
+// ────────────────────────────────────────────
 // GAME STATE
 // ────────────────────────────────────────────
 var S = {
@@ -1023,6 +1159,7 @@ var S = {
   activeClueTab: 0,
   currentLat: 40.71, currentLng: -74.01,
   userLat: 40.71,    userLng: -74.01,
+  legOptions: [], legCorrect: [],
 };
 
 function C()    { return CASES[S.caseIdx]; }
@@ -1379,7 +1516,7 @@ function expandCaseFile() {
     '</div>';
 
   chip.replaceWith(wrap);
-  container.scrollTop = container.scrollHeight;
+  setTimeout(function() { container.scrollTop = container.scrollHeight; }, 420);
 }
 
 // ────────────────────────────────────────────
@@ -1389,6 +1526,17 @@ function onAcceptCase() {
   Audio.click();
   S.legIdx=0; S.witnessIdx=0; S.wrongGuessesThisLeg=0; S.activeClueTab=0;
   S.eliminatedIdxs=[]; S.legScores=[];
+
+  // Pre-generate dynamic options for all legs
+  var c = C();
+  var usedNames = [c.startingCity];
+  S.legOptions = []; S.legCorrect = [];
+  c.legs.forEach(function(l) {
+    var gen = generateLegOptions(l.target, l.targetLat, l.targetLng, usedNames);
+    S.legOptions.push(gen.options);
+    S.legCorrect.push(gen.correct);
+    usedNames.push(l.target);
+  });
 
   var c = C();
   S.currentCity = c.startingCity;
@@ -1443,7 +1591,7 @@ function openMap() {
   showPickHint();
   hideStageOverlay();
 
-  var opts = leg().options;
+  var opts = S.legOptions[S.legIdx];
   var cLat = opts.reduce(function(s,o){return s+o.lat;},0)/opts.length;
   var cLng = opts.reduce(function(s,o){return s+o.lng;},0)/opts.length;
   setPins(opts, S.eliminatedIdxs);
@@ -1454,14 +1602,14 @@ function openMap() {
 function handleCityTap(name, idx) {
   if (S.eliminatedIdxs.includes(idx)) return;
 
-  if (idx === leg().correct) {
+  if (idx === S.legCorrect[S.legIdx]) {
     // CORRECT
     Audio.correct();
     flash('rgba(34,197,94,0.2)', 0.5);
     S.legScores.push(calcScore());
     S.currentCity = name; // detective has now arrived here
 
-    var opt = leg().options[idx];
+    var opt = S.legOptions[S.legIdx][idx];
     clearPins();
     hidePickHint();
 
@@ -1497,7 +1645,7 @@ function handleCityTap(name, idx) {
     var nope = leg().nopeLines[nopeIdx];
 
     // Update pin to red
-    setPins(leg().options, S.eliminatedIdxs);
+    setPins(S.legOptions[S.legIdx], S.eliminatedIdxs);
 
     var score = calcScore();
     var remaining = 4 - S.eliminatedIdxs.length;
@@ -1564,11 +1712,11 @@ function advanceLeg() {
   showGlobeStage();
   clearPins();
 
-  var opts = leg().options;
+  var opts = S.legOptions[S.legIdx];
   var toLat = opts.reduce(function(s,o){return s+o.lat;},0)/opts.length;
   var toLng = opts.reduce(function(s,o){return s+o.lng;},0)/opts.length;
 
-  showFlightOverlay('Flying to', opts[leg().correct].name + ' area', 'Move ' + (S.legIdx+1) + ' of 4');
+  showFlightOverlay('Flying to', opts[S.legCorrect[S.legIdx]].name + ' area', 'Move ' + (S.legIdx+1) + ' of 4');
 
   setTimeout(function() {
     hideFlightOverlay();
