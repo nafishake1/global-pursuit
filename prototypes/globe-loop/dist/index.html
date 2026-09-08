@@ -96,10 +96,20 @@
     .chat-name { font-size: 15px; font-weight: 700; color: var(--text); }
     .chat-status { font-size: 11px; color: var(--gold); margin-top: 1px; }
     .chat-messages {
-      flex: 1; overflow-y: auto; padding: 20px 16px 12px;
-      display: flex; flex-direction: column; justify-content: flex-end; gap: 10px;
+      flex: 1; min-height: 0; overflow-y: auto; padding: 20px 16px 12px;
+      display: flex; flex-direction: column; gap: 10px;
       scrollbar-width: none; -ms-overflow-style: none; overflow-anchor: none;
     }
+    /* Two flexbox traps, both of which bit once the phone chrome took height
+       out of this column:
+       1. flex items shrink to fit by default — that squashed the case file
+          card and clipped the "Go Now!" button off the bottom of it.
+       2. `justify-content: flex-end` bottom-aligns the messages but sends any
+          overflow off the TOP, where scrolling cannot reach it. `margin-top:
+          auto` on the first child pins them to the bottom the same way while
+          keeping the column properly scrollable. */
+    .chat-messages > * { flex-shrink: 0; }
+    .chat-messages > *:first-child { margin-top: auto; }
     .chat-messages::-webkit-scrollbar { display: none; }
     .bubble {
       max-width: 82%; padding: 11px 15px; border-radius: 20px; border-bottom-left-radius: 5px;
@@ -2501,7 +2511,9 @@ function expandCaseFile() {
     '</div>';
 
   chip.replaceWith(wrap);
-  setTimeout(function() { container.scrollTop = container.scrollHeight; }, 420);
+  function toBottom() { container.scrollTop = container.scrollHeight; }
+  requestAnimationFrame(toBottom);
+  setTimeout(toBottom, 460);   // again once the open animation has finished
 }
 
 // ────────────────────────────────────────────
