@@ -3,7 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Global Pursuit — Web Prototype</title>
+  <title>Global Pursuit</title>
+  <meta name="description" content="A daily geography chase. Read the witnesses, work out the city, follow the thief around the world.">
+  <meta property="og:title" content="Global Pursuit">
+  <meta property="og:description" content="A daily geography chase. Read the witnesses, work out the city, follow the thief around the world.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230d0d14'/%3E%3Ccircle cx='32' cy='32' r='17' fill='none' stroke='%23e8b84b' stroke-width='4'/%3E%3Cpath d='M15 32h34M32 15c5 5 5 29 0 34M32 15c-5 5-5 29 0 34' fill='none' stroke='%23e8b84b' stroke-width='2.6'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&display=swap" rel="stylesheet">
@@ -764,10 +769,30 @@
 
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ─── Too-narrow notice ────────────────── */
+    #too-narrow { display: none; }
+    @media (max-width: 900px), (max-height: 520px) {
+      #app { display: none; }
+      #too-narrow {
+        display: flex; position: fixed; inset: 0; z-index: 999;
+        flex-direction: column; align-items: center; justify-content: center;
+        gap: 14px; padding: 40px 28px; text-align: center; background: var(--bg);
+      }
+      #too-narrow .tn-mark { font-size: 40px; }
+      #too-narrow h1 { font-size: 21px; font-weight: 900; color: var(--gold); }
+      #too-narrow p { font-size: 14px; line-height: 1.6; color: var(--muted); max-width: 340px; }
+    }
   </style>
 </head>
 <body>
 <div id="flash-overlay"></div>
+
+<div id="too-narrow">
+  <div class="tn-mark">🕵️</div>
+  <h1>Global Pursuit needs a wider window</h1>
+  <p>The case notes sit beside the street, so it wants a desktop browser — around 1000px across or more. Widen the window or open it on a laptop.</p>
+</div>
 
 <div id="app">
   <!-- ── LEFT: PHONE PANEL ──────────────── -->
@@ -934,7 +959,7 @@
 </div>
 
 <script src="topojson.min.js"></script>
-<script src="https://unpkg.com/globe.gl@2/dist/globe.gl.min.js"></script>
+<script src="globe.gl.min.js"></script>
 <!-- Google Maps JavaScript API (google.maps.StreetViewService + StreetViewPanorama)
      is loaded once, asynchronously, from the <head> using the key in config.js.
      Do NOT add a second script tag for it here — loading the Maps API twice
